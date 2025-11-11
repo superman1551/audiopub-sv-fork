@@ -129,6 +129,40 @@ export const load: PageServerLoad = async (event) => {
 };
 
 export const actions: Actions = {
+    edit_audio: async (event) => {
+        const user = event.locals.user;
+        if (!user || user.isBanned) return error(403, "Forbidden");
+        const audio = await Audio.findByPk(event.params.id, { include: User });
+        if (!audio) return error(404, "Not found");
+        if (!user.isAdmin && user.id !== audio.userId) return error(403, "Forbidden");
+
+        const form = await event.request.formData();
+        const description = (form.get("description") as string | null) ?? "";
+
+        if (description.length > 4000) {
+            return fail(400, { message: "Description too long (max 4000)", description });
+        }
+
+        const prev = audio.description || "";
+        audio.description = description;
+        await audio.save();
+
+        // Mentions in description updates: notify newly mentioned users only
+        await Notification.createMentionsFromText(
+            user.id,
+            NotificationTargetType.audio,
+            audio.id,
+            description,
+            {
+                prevText: prev,
+                metadata: {
+                    audioId: audio.id,
+                    content: description.slice(0, 400),
+                },
+            }
+        );
+        return { success: true };
+    },
     delete: async (event) => {
         const user = event.locals.user;
         const audio = await Audio.findByPk(event.params.id, { include: User });
@@ -210,6 +244,26 @@ export const actions: Actions = {
             return error(403, "Forbidden");
         }
         await comment.destroy();
+        return { success: true };
+    },
+    edit_comment: async (event) => {
+        const user = event.locals.user;
+        if (!user || user.isBanned) return error(403, "Forbidden");
+        const form = await event.request.formData();
+        const id = form.get("id") as string | null;
+        const content = (form.get("content") as string | null) ?? "";
+        if (!id) return fail(400, { message: "Missing id" });
+
+        const comment = await Comment.findByPk(id, { include: [User] });
+        if (!comment) return error(404, "Not found");
+        if (!user.isAdmin && user.id !== comment.userId) return error(403, "Forbidden");
+
+        if (content.length < 3 || content.length > 4000) {
+            return fail(400, { message: "Comment must be between 3 and 4000 characters", id, content });
+        }
+
+        comment.content = content;
+        await comment.save();
         return { success: true };
     },
     follow: async (event) => {

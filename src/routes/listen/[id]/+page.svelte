@@ -22,11 +22,21 @@
     import { enhance } from "$app/forms";
     import { onMount } from "svelte";
     import CommentList from "$lib/components/comment_list.svelte";
+    import Modal from "$lib/components/modal.svelte";
     import title from "$lib/title";
     import SafeMarkdown from "$lib/components/safe_markdown.svelte";
     import AudioActions from "$lib/components/audio_actions.svelte";
     import { t, locale, availableLocales } from "$lib/i18n";
-    onMount(() => title.set(data.audio.title));
+    
+    let isDeleteAudioModalVisible: boolean = false;
+    let isEditAudioModalVisible: boolean = false;
+    let editDescription: string = "";
+
+    onMount(() => {
+        title.set(data.audio.title);
+        editDescription = data.audio.description || "";
+    });
+    
     const handlePlay = () => {
         fetch(`/listen/${data.audio.id}/try_register_play`, { method: "POST" });
     };
@@ -100,23 +110,42 @@
     {/if}
 
     {#if data.user && (data.isAdmin || data.user.id === data.audio.user?.id)}
-        <form
-            use:enhance={({
-                formElement,
-                formData,
-                action,
-                cancel,
-                submitter,
-            }) => {
-                if (!confirm("Are you sure you want to delete this audio?")) {
-                    cancel();
-                }
-            }}
-            action="?/delete"
-            method="POST"
-        >
-            <button type="submit"> Permanently delete</button>
-        </form>
+        <div class="owner-actions">
+            <button type="button" on:click={() => { isEditAudioModalVisible = true; editDescription = data.audio.description || ""; }}>
+                {t('common.edit')}
+            </button>
+            <Modal ariaLabel={t('listen.edit_description_aria')} bind:visible={isEditAudioModalVisible}>
+                <h2>{t('listen.edit_description_title')}</h2>
+                <form
+                  use:enhance={(enhanceArgs) => {
+                    return async ({ result, update }) => {
+                      await update(result);
+                      isEditAudioModalVisible = false;
+                    };
+                  }}
+                  action="?/edit_audio" method="POST">
+                    <label for="description">{t('listen.edit_description_label')}</label>
+                    <textarea id="description" name="description" rows="6" bind:value={editDescription} maxlength="4000"></textarea>
+                    <div class="modal-actions">
+                        <button type="button" on:click={() => (isEditAudioModalVisible = false)}>{t('common.cancel')}</button>
+                        <button type="submit">{t('common.confirm')}</button>
+                    </div>
+                </form>
+            </Modal>
+        </div>
+        <button type="button" on:click={() => isDeleteAudioModalVisible = true}>
+            {t('listen.delete')}
+        </button>
+        <Modal ariaLabel={t('listen.delete_confirm_aria')} bind:visible={isDeleteAudioModalVisible}>
+            <h2>{t('listen.delete_confirm_title')}</h2>
+            <p>{t('listen.delete_confirm')}</p>
+            <form action="?/delete" method="POST">
+                <div class="modal-actions">
+                    <button type="button" on:click={() => isDeleteAudioModalVisible = false}>{t('common.cancel')}</button>
+                    <button type="submit">{t('common.confirm')}</button>
+                </div>
+            </form>
+        </Modal>
     {/if}
 
     <CommentList

@@ -18,6 +18,7 @@
 -->
 <script lang="ts">
     import Modal from "./modal.svelte";
+    import { t } from "$lib/i18n";
     export let href: string;
     export let title: string;
 
@@ -52,7 +53,10 @@
         }
     }
 
-    $: safeHref = sanitizeUrl(href);
+    // Internal links (site routes) should work directly and be fully accessible
+    $: rawHref = (href || "").trim();
+    $: isInternal = rawHref.startsWith("/");
+    $: safeHref = isInternal ? rawHref : sanitizeUrl(rawHref);
     let confirmVisible = false;
 
     function confirmOpen(e: MouseEvent) {
@@ -69,26 +73,34 @@
 </script>
 
 {#if safeHref}
-    <a
-        href={safeHref}
-        {title}
-        target="_blank"
-        rel="noopener noreferrer nofollow"
-        on:click|preventDefault={confirmOpen}
-    >
-        <slot />
-    </a>
-    <Modal bind:visible={confirmVisible}>
-        <h2>Open link?</h2>
-        <p>You're about to open an external link:</p>
-        <p style="word-break: break-all"><strong>{safeHref}</strong></p>
-        <div
-            style="display: flex; gap: .5rem; margin-top: .75rem; flex-wrap: wrap;"
+    {#if isInternal}
+        <!-- Internal link: navigate normally without confirmation -->
+        <a href={safeHref} {title}>
+            <slot />
+        </a>
+    {:else}
+        <!-- External link: show confirmation modal before opening in new tab -->
+        <a
+            href={safeHref}
+            {title}
+            target="_blank"
+            rel="noopener noreferrer nofollow"
+            on:click|preventDefault={confirmOpen}
         >
-            <button on:click={() => (confirmVisible = false)}>Cancel</button>
-            <button on:click={openLink}>Open</button>
-        </div>
-    </Modal>
+            <slot />
+        </a>
+        <Modal ariaLabel={t('untrusted.open_dialog_aria')} bind:visible={confirmVisible}>
+            <h2>{t('untrusted.open_title')}</h2>
+            <p>{t('untrusted.open_text')}</p>
+            <p style="word-break: break-all"><strong>{safeHref}</strong></p>
+            <div
+                style="display: flex; gap: .5rem; margin-top: .75rem; flex-wrap: wrap;"
+            >
+                <button on:click={() => (confirmVisible = false)}>{t('common.cancel')}</button>
+                <button on:click={openLink}>{t('untrusted.open_btn')}</button>
+            </div>
+        </Modal>
+    {/if}
 {/if}
 
 <style>

@@ -25,6 +25,7 @@
     import title from "$lib/title";
     import { t, locale } from "$lib/i18n";
     import AudioActions from "$lib/components/audio_actions.svelte";
+    import Modal from "$lib/components/modal.svelte";
 
     export let audios: ClientsideAudio[];
     export let currentUser: ClientsideUser | null = null;
@@ -35,7 +36,7 @@
     let currentTime = 0;
     let duration = 0;
     let isBuffering = false;
-    let commentsDialog: HTMLDialogElement;
+    // Use shared Modal component instead of native dialog
     let statusAnnouncement: HTMLElement;
     let isCommentsDialogOpen = false;
     
@@ -88,14 +89,7 @@
     // Track if audio listeners have been set up
     let audioListenersSetup = false;
 
-    // Keep dialog state synchronized with the actual dialog element
-    $: if (browser && commentsDialog) {
-        // Sync our reactive state with the actual dialog open state
-        const actuallyOpen = commentsDialog.open;
-        if (actuallyOpen !== isCommentsDialogOpen) {
-            isCommentsDialogOpen = actuallyOpen;
-        }
-    }
+    // Modal visibility is driven by isCommentsDialogOpen via binding
     
 
     function initializeAudioPool() {
@@ -1020,62 +1014,21 @@
     }
 
     function openCommentsDialog(index: number) {
-        // Use scroll-based navigation to avoid double crossfade
-        if (commentsDialog && browser && !isCommentsDialogOpen) {
-            try {
-                commentsDialog.showModal();
-                isCommentsDialogOpen = true;
-            } catch (error) {
-                console.error('Failed to open comments dialog:', error);
-            }
+        // Open shared Modal
+        if (browser && !isCommentsDialogOpen) {
+            isCommentsDialogOpen = true;
         }
     }
 
     function closeCommentsDialog(event?: Event) {
         // Prevent event bubbling if this was called from a click event
         if (event) {
-            console.log('🔥 Close button clicked, preventing event bubbling');
             event.preventDefault();
             event.stopPropagation();
         }
-        
-        if (commentsDialog && browser && isCommentsDialogOpen) {
-            try {
-                console.log('🔥 Closing comments dialog');
-                commentsDialog.close();
-                isCommentsDialogOpen = false;
-            } catch (error) {
-                console.error('Failed to close comments dialog:', error);
-                // Fallback: force close by removing the open attribute
-                try {
-                    commentsDialog.removeAttribute('open');
-                    isCommentsDialogOpen = false;
-                } catch (fallbackError) {
-                    console.error('Fallback close also failed:', fallbackError);
-                }
-            }
+        if (browser && isCommentsDialogOpen) {
+            isCommentsDialogOpen = false;
         }
-    }
-
-    function handleDialogClick(event: MouseEvent) {
-        // Close dialog when clicking on backdrop (outside content)
-        if (event.target === commentsDialog) {
-            console.log('🔥 Backdrop clicked, closing dialog');
-            closeCommentsDialog(event);
-        }
-    }
-
-    function handleDialogTouchStart(event: TouchEvent) {
-        // Prevent ALL touch events within dialog from bubbling to document handlers
-        // This completely isolates dialog interactions from main app swipe gestures
-        console.log('🔥 Dialog touch start, stopping propagation');
-        event.stopPropagation();
-    }
-
-    function handleDialogTouchEnd(event: TouchEvent) {
-        // Prevent ALL touch events within dialog from bubbling to document handlers
-        console.log('🔥 Dialog touch end, stopping propagation');
-        event.stopPropagation();
     }
 
     function startPlayTracking() {
@@ -1231,7 +1184,7 @@
         console.log('  - Input focused:', isInputFocused);
         
         // Handle escape key for modal - ALWAYS attempt to close if dialog is supposed to be open
-        if (event.key === 'Escape' && (isCommentsDialogOpen || commentsDialog?.open)) {
+        if (event.key === 'Escape' && isCommentsDialogOpen) {
             console.log('🚪 Escape pressed - closing modal');
             event.preventDefault();
             event.stopPropagation();
@@ -1748,17 +1701,11 @@
         {/if}
     
     <!-- Comments Dialog -->
-    <dialog 
-        bind:this={commentsDialog} 
-        class="comments-dialog" 
-        on:click={handleDialogClick}
-        on:touchstart={handleDialogTouchStart}
-        on:touchend={handleDialogTouchEnd}
-    >
+    <Modal ariaLabel={t('comments.title')} bind:visible={isCommentsDialogOpen}>
         {#if currentAudio}
             <div class="comments-header">
-                <h3>{t('comments.title')}</h3>
-                <button class="close-btn" on:click={closeCommentsDialog} aria-label={t('comments.close_aria')}>✕</button>
+                <h2 id="comments-title">{t('comments.title')}</h2>
+                <button class="close-btn" on:click={closeCommentsDialog} aria-label={t('comments.close_aria')} autofocus>✕</button>
             </div>
                 <div class="comments-content">
                     {#if currentAudio.comments && currentAudio.comments.length > 0}
@@ -1837,7 +1784,7 @@
                     {/if}
                 </div>
         {/if}
-    </dialog>
+    </Modal>
     
     <!-- Status announcements for screen readers -->
     <div aria-live="polite" class="sr-only" bind:this={statusAnnouncement}></div>

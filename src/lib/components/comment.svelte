@@ -28,10 +28,14 @@
     export let user: ClientsideUser | undefined = undefined;
     export let isAdmin: boolean = false;
     let isDeletionModalVisible: boolean = false;
+    let isEditModalVisible: boolean = false;
+    let editContent: string = '';
 
     $: commentDate = comment
         ? formatRelative(new Date(comment.createdAt), new Date())
         : "";
+
+    $: editContent = comment?.content ?? '';
 
     $: $locale;
 </script>
@@ -48,10 +52,11 @@
     <SafeMarkdown source={comment.content} />
     {#if isAdmin || (user && user.id === comment.user.id)}
         <div id="comment-actions">
+            <button on:click={() => (isEditModalVisible = true)}>{t('comment.edit')}</button>
             <button on:click={() => (isDeletionModalVisible = true)}
                 >{t('comment.delete')}</button
             >
-            <Modal bind:visible={isDeletionModalVisible}>
+            <Modal ariaLabel={t('comment.delete_dialog_aria')} bind:visible={isDeletionModalVisible}>
                 <h2>{t('comment.delete_confirm')}</h2>
                 <p>{t('comment.delete_warning')}</p>
                 <p>{t('comment.content')}:</p>
@@ -62,6 +67,26 @@
                 <form use:enhance action="?/delete_comment" method="post">
                     <input type="hidden" name="id" value={comment.id} />
                     <button type="submit">{t('comment.delete_confirm_button')}</button>
+                </form>
+            </Modal>
+
+            <Modal ariaLabel={t('comment.edit_title')} bind:visible={isEditModalVisible}>
+                <h2>{t('comment.edit_title')}</h2>
+                <form
+                  use:enhance={() => {
+                    return async ({ result, update }) => {
+                      await update(result);
+                      isEditModalVisible = false;
+                    };
+                  }}
+                  action="?/edit_comment" method="post">
+                    <input type="hidden" name="id" value={comment.id} />
+                    <label for={`content-${comment.id}`}>{t('comment.content_label')}</label>
+                    <textarea id={`content-${comment.id}`} name="content" rows="6" bind:value={editContent} minlength="3" maxlength="4000"></textarea>
+                    <div class="modal-actions">
+                        <button type="button" on:click={() => (isEditModalVisible = false)}>{t('common.cancel')}</button>
+                        <button type="submit">{t('common.confirm')}</button>
+                    </div>
                 </form>
             </Modal>
         </div>

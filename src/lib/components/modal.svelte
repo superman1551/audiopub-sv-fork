@@ -18,6 +18,7 @@
 -->
 <script lang="ts">
   export let visible: boolean;
+  export let ariaLabel: string | undefined = undefined;
   let dialog: HTMLDialogElement;
   $: if (dialog) {
     if (visible) {
@@ -33,6 +34,8 @@
   bind:this={dialog}
   on:close={() => (visible = false)}
   on:click|self={() => dialog.close()}
+  aria-modal="true"
+  aria-label={ariaLabel}
 >
   <!-- svelte-ignore a11y-no-static-element-interactions -->
   <div on:click|stopPropagation>
@@ -74,5 +77,38 @@
     to {
       opacity: 1;
     }
+  }
+  
+  /* Global styles for modal actions */
+  :global(.modal-actions) {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+  
+  :global(.modal-actions button) {
+    padding: 0.5rem 1rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: #f8f9fa;
+    cursor: pointer;
+    font-size: 0.9rem;
+  }
+  
+  :global(.modal-actions button:hover) {
+    background-color: #e9ecef;
+  }
+  
+  :global(.modal-actions button[type="submit"]) {
+    background-color: #007bff;
+    color: white;
+    border-color: #007bff;
+  }
+  
+  :global(.modal-actions button[type="submit"]:hover) {
+    background-color: #0056b3;
+    border-color: #0056b3;
   }
 </style>
