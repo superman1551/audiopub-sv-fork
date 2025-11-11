@@ -84,6 +84,11 @@ export default class Audio extends Model {
     declare extension: string;
 
     @AllowNull(false)
+    @Default("und")
+    @Column(DataType.STRING)
+    declare language: string;
+
+    @AllowNull(false)
     @Default(false)
     @Column(DataType.BOOLEAN)
     declare isFromAi: boolean;
@@ -158,6 +163,7 @@ export default class Audio extends Model {
             id: this.id,
             title: this.title,
             description: this.description,
+            language: this.language,
             extension: this.extension,
             path: this.path,
             transcodedPath: this.transcodedPath,

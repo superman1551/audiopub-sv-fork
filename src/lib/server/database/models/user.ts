@@ -114,6 +114,14 @@ export default class User extends Model {
   @Column(DataType.INTEGER)
   declare version: number;
 
+  @AllowNull(true)
+  @Column(DataType.TEXT)
+  declare bio: string | null;
+
+  @AllowNull(true)
+  @Column(DataType.TEXT)
+  declare preferredLanguages: string | null;
+
   @CreatedAt
   declare createdAt: Date;
 
@@ -254,7 +262,19 @@ export default class User extends Model {
       isBanned: this.isBanned,
       isVerified: this.isVerified,
       isTrusted: this.isTrusted,
+      bio: this.bio || undefined,
+      preferredLanguages: this.getPreferredLanguages(),
     };
+  }
+
+  getPreferredLanguages(): string[] | undefined {
+    if (!this.preferredLanguages) return undefined;
+    try {
+      const arr = JSON.parse(this.preferredLanguages);
+      return Array.isArray(arr) ? (arr as string[]) : undefined;
+    } catch {
+      return undefined;
+    }
   }
 
   @BeforeCreate

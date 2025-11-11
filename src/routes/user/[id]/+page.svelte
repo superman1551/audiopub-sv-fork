@@ -21,11 +21,18 @@
     import AudioList from "$lib/components/audio_list.svelte";
     import title from "$lib/title.js";
     import { t, locale } from "$lib/i18n";
+    import SafeMarkdown from "$lib/components/safe_markdown.svelte";
     export let data;
     $: { $locale; title.set(t('title.user_profile', { name: data.profileUser.displayName })); }
 </script>
 
 <h1>{data.profileUser.displayName}'s {t('user.profile')}</h1>
+
+{#if data.profileUser.bio}
+    <div class="user-bio">
+        <SafeMarkdown source={data.profileUser.bio} />
+    </div>
+{/if}
 
 <table>
     <tbody>
@@ -126,5 +133,13 @@
 
     button:hover {
         background-color: #444;
+    }
+
+    .user-bio {
+        background-color: #f9f9f9;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 1rem;
+        margin-bottom: 1rem;
     }
 </style>

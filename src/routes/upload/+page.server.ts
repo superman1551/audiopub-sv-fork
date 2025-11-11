@@ -22,6 +22,7 @@ import { error, fail, redirect } from "@sveltejs/kit";
 import type { Actions, PageServerLoad } from "./$types";
 import { Audio } from "$lib/server/database";
 import transcode from "$lib/server/transcode";
+import { availableLocales } from "$lib/i18n";
 
 export const load: PageServerLoad = (event) => {
     const user = event.locals.user;
@@ -57,30 +58,50 @@ export const actions: Actions = {
         const file = form.get("file") as File;
         const title = form.get("title") as string;
         const description = form.get("description") as string;
+        const languageRaw = (form.get("language") as string | null)?.trim().toLowerCase();
+        
         if (!file) {
-            return fail(400, { title, description });
+            return fail(400, { title, description, language: languageRaw });
         }
         if (!title) {
-            return fail(400, { title, description });
+            return fail(400, { title, description, language: languageRaw });
         }
         if (title.length < 3 || title.length > 120) {
-            return fail(400, { title, description });
+            return fail(400, { title, description, language: languageRaw });
         }
         if (description && description.length > 5000) {
-            return fail(400, { title, description });
+            return fail(400, { title, description, language: languageRaw });
         }
         if (file.size > 1024 * 1024 * 500) {
             // 500 MB
-            return fail(400, { title, description });
+            return fail(400, { title, description, language: languageRaw });
         }
+        
+        // Validate language: must be 'und' or in availableLocales
+        const LOCALE_CODES = new Set(availableLocales.map((l) => l.code));
+        const validLanguageCodes = new Set([...LOCALE_CODES, "und"]);
+        
+        if (!languageRaw || !validLanguageCodes.has(languageRaw)) {
+            return fail(400, {
+                errorKey: 'upload.error.invalid_language',
+                title,
+                description,
+                language: languageRaw || '',
+            });
+        }
+        
         const audio = await Audio.create({
             title,
             description,
             hasFile: true,
             userId: user.id,
             extension: path.extname(file.name),
+            language: languageRaw,
         });
-        await fs.writeFile(audio.path, Buffer.from(await file.arrayBuffer()));
+        // Ensure destination directory exists (e.g., ./audio)
+        await fs.mkdir(path.dirname(audio.path), { recursive: true });
+        const arr = await file.arrayBuffer();
+        await fs.writeFile(audio.path, new Uint8Array(arr));
         transcode(audio.path).catch(async (err) => {
             console.error(err);
             await audio.destroy();

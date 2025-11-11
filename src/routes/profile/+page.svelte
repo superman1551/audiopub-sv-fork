@@ -22,7 +22,7 @@
     import type { ActionData } from "./$types";
     import AudioList from "$lib/components/audio_list.svelte";
     import title from "$lib/title";
-    import { t, locale } from "$lib/i18n";
+    import { t, locale, availableLocales } from "$lib/i18n";
     $: { $locale; title.set(t('title.profile')); }
 
     export let data: PageData;
@@ -38,25 +38,73 @@
         </div>
     {/if}
 
-    <label for="email">{t('profile.email')}:</label>
-    <input type="email" id="email" name="email" value={data.email} />
-    <label for="displayName">{t('profile.display_name')}:</label>
-    <input
-        type="text"
-        id="displayName"
-        name="displayName"
-        value={data.displayName}
-        minlength="3"
-        maxlength="30"
-    />
-    <label for="password">{t('profile.new_password')}:</label>
-    <input
-        type="password"
-        id="password"
-        name="password"
-        minlength="8"
-        maxlength="64"
-    />
+    <fieldset>
+        <legend>{t('profile.account_details')}</legend>
+        
+        <label for="email">{t('profile.email')}:</label>
+        <input type="email" id="email" name="email" value={data.email} />
+        
+        <label for="displayName">{t('profile.display_name')}:</label>
+        <input
+            type="text"
+            id="displayName"
+            name="displayName"
+            value={data.displayName}
+            minlength="3"
+            maxlength="30"
+        />
+        
+        <label for="password">{t('profile.new_password')}:</label>
+        <input
+            type="password"
+            id="password"
+            name="password"
+            minlength="8"
+            maxlength="64"
+        />
+    </fieldset>
+
+    <fieldset>
+        <legend>{t('profile.content_prefs')}</legend>
+        
+        <label for="bio">{t('profile.bio')}:</label>
+        <textarea
+            id="bio"
+            name="bio"
+            rows="4"
+            maxlength="500"
+            class="form-control"
+            placeholder={t('profile.bio_placeholder')}
+        >{data.profileUser?.bio || ''}</textarea>
+        
+        <div class="language-prefs">
+            <p id="langHint">{t('profile.lang_hint')}</p>
+            <div role="group" aria-labelledby="langHint" class="language-checkboxes">
+                <label class="checkbox-label">
+                    <input 
+                        type="checkbox" 
+                        name="preferredLanguages" 
+                        value="und"
+                        checked={data.profileUser?.preferredLanguages?.includes('und')}
+                    />
+                    {t('upload.language_unknown')}
+                </label>
+                {#each availableLocales as lang}
+                    <label class="checkbox-label">
+                        <input 
+                            type="checkbox" 
+                            name="preferredLanguages" 
+                            value={lang.code}
+                            checked={data.profileUser?.preferredLanguages?.includes(lang.code)}
+                        />
+                        {lang.nativeName}
+                    </label>
+                {/each}
+            </div>
+            <small class="help">{t('profile.lang_help')}</small>
+        </div>
+    </fieldset>
+
     <button type="submit">{t('profile.update')}</button>
 </form>
 
@@ -109,5 +157,55 @@
 
     button:hover {
         background-color: #444;
+    }
+
+    fieldset {
+        border: 1px solid #ddd;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border-radius: 4px;
+    }
+
+    legend {
+        font-weight: bold;
+        padding: 0 0.5rem;
+    }
+
+    textarea.form-control {
+        width: 100%;
+        padding: 0.5rem;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-family: inherit;
+        resize: vertical;
+    }
+
+    .language-prefs {
+        margin-top: 1rem;
+    }
+
+    .language-checkboxes {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        margin: 0.5rem 0;
+    }
+
+    .checkbox-label {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: normal;
+    }
+
+    .checkbox-label input[type="checkbox"] {
+        width: auto;
+        margin: 0;
+    }
+
+    .help {
+        color: #666;
+        font-size: 0.9rem;
+        font-style: italic;
     }
 </style>

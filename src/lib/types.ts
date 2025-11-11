@@ -23,12 +23,15 @@ export interface ClientsideUser {
     isBanned: boolean;
     isVerified: boolean;
     isTrusted: boolean;
+    preferredLanguages?: string[];
+    bio?: string;
 }
 
 export interface ClientsideAudio {
     id: string;
     title: string;
     description: string;
+    language: string;
     extension: string;
     path: string;
     transcodedPath: string;
@@ -56,6 +59,7 @@ export enum NotificationType {
     upload = "upload",
     system = "system",
     favorite = "favorite",
+    mention = "mention",
 }
 
 export enum NotificationTargetType {

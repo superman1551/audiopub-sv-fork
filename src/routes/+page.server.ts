@@ -19,7 +19,7 @@
 import { Audio, User } from "$lib/server/database";
 import AudioFavorite from "$lib/server/database/models/audio_favorite";
 import type { PageServerLoad } from "./$types";
-import { type OrderItem, Sequelize } from "sequelize";
+import { type OrderItem, Sequelize, Op } from "sequelize";
 
 
 export const load: PageServerLoad = async (event) => {
@@ -52,6 +52,9 @@ export const load: PageServerLoad = async (event) => {
         order = [[validatedSortField, validatedSortOrder]];
     }
 
+    // If the user has preferred languages, filter the feed by them
+    const preferredLangs = event.locals.user?.getPreferredLanguages?.() ?? undefined;
+
     const audios = await Audio.findAndCountAll({
         limit,
         offset,
@@ -60,6 +63,7 @@ export const load: PageServerLoad = async (event) => {
             model: User,
             where: event.locals.user?.isAdmin ? {} : { isTrusted: true },
         },
+        where: preferredLangs && preferredLangs.length > 0 ? { language: { [Op.in]: preferredLangs } } : undefined,
     });
 
     const audioIds = audios.rows.map(audio => audio.id);

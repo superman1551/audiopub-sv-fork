@@ -25,7 +25,7 @@
     import title from "$lib/title";
     import SafeMarkdown from "$lib/components/safe_markdown.svelte";
     import AudioActions from "$lib/components/audio_actions.svelte";
-    import { t, locale } from "$lib/i18n";
+    import { t, locale, availableLocales } from "$lib/i18n";
     onMount(() => title.set(data.audio.title));
     const handlePlay = () => {
         fetch(`/listen/${data.audio.id}/try_register_play`, { method: "POST" });
@@ -47,6 +47,15 @@
         if (count <= 0) return t('plays.none');
         if (count === 1) return t('plays.one');
         return t('plays.many', { count });
+    })();
+
+    // Language label resolution
+    const LANGUAGE_MAP = new Map(availableLocales.map((l) => [l.code, l.nativeName] as const));
+    $: audioLanguageLabel = (() => {
+        const localeSignal = $locale;
+        void localeSignal;
+        if (data.audio.language === 'und') return t('upload.language_unknown');
+        return LANGUAGE_MAP.get(data.audio.language) || data.audio.language;
     })();
 </script>
 
@@ -83,6 +92,7 @@
             >
         </p>
     {/if}
+    <p>{t('listen.language')}: {audioLanguageLabel}</p>
     <p>{t('listen.upload_date')}: {new Date(data.audio.createdAt).toLocaleDateString()}</p>
     {#if data.audio.description}
         <h2>{t('listen.description')}:</h2>

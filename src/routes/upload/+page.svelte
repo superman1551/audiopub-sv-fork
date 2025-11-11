@@ -19,9 +19,11 @@
 <script lang="ts">
     import { enhance } from "$app/forms";
     import title from "$lib/title";
-    import { t, locale } from "$lib/i18n";
+    import { t, locale, availableLocales } from "$lib/i18n";
+    import type { ActionData } from "./$types";
     $: { $locale; title.set(t('title.upload')); }
     let submitting = false;
+    export let form: ActionData;
 </script>
 
 <h1>{t('upload.h1')}</h1>
@@ -37,6 +39,11 @@
     method="POST"
     enctype="multipart/form-data"
 >
+    {#if form?.errorKey || form?.message}
+        <div class="error-message" role="alert" aria-live="assertive">
+            {#if form?.errorKey}{t(form.errorKey)}{:else}{form?.message}{/if}
+        </div>
+    {/if}
     <div class="form-group">
         <label for="title">{t('upload.title')}</label>
         <input
@@ -47,16 +54,27 @@
             minlength="3"
             maxlength="120"
             class="form-control"
+            value={form?.title || ''}
         />
     </div>
     <div class="form-group">
-        <label for="description">Description:</label>
+        <label for="description">{t('upload.description')}</label>
         <textarea
             id="description"
             name="description"
             maxlength="5000"
             class="form-control"
-        ></textarea>
+        >{form?.description || ''}</textarea>
+    </div>
+    <div class="form-group">
+        <label for="language">{t('upload.language')}</label>
+        <select id="language" name="language" class="form-control" aria-describedby="languageHelp" value={form?.language ?? $locale}>
+            <option value="und">{t('upload.language_unknown')}</option>
+            {#each availableLocales as l}
+                <option value={l.code}>{l.nativeName}</option>
+            {/each}
+        </select>
+        <small id="languageHelp" class="help-text">{t('upload.language_help')}</small>
     </div>
     <div class="form-group">
         <label for="audio">{t('upload.file')}</label>
@@ -80,6 +98,17 @@
 </form>
 
 <style>
+    .error-message {
+        color: #721c24;
+        background-color: #f8d7da;
+        border: 1px solid #f5c6cb;
+        border-radius: 4px;
+        padding: 0.75rem;
+        margin-bottom: 1rem;
+        width: 100%;
+        max-width: 600px;
+    }
+    
     h1 {
         text-align: center;
         margin-bottom: 1rem;
