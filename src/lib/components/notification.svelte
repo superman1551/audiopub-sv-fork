@@ -78,6 +78,27 @@
             {t('notifications.favorited')} <a {href}>{(audio as any).title}</a>
             <span class="comment-date"> - {relativeTime}</span>
         </h3>
+    {:else if notification.type === NotificationType.mention && notification.target}
+        {#if notification.targetType === NotificationTargetType.comment}
+            {@const comment = notification.target as ClientsideComment}
+            <h3>
+                <a href={`/user/${notification.actor?.id}`}>
+                    {notification.actor?.displayName}
+                </a>
+                {t('notifications.mentioned_in')} <a {href}>{comment.audio?.title}</a>
+                <span class="comment-date"> - {relativeTime}</span>
+            </h3>
+            <SafeMarkdown source={comment.content} />
+        {:else if notification.targetType === NotificationTargetType.audio}
+            {@const audio = notification.target}
+            <h3>
+                <a href={`/user/${notification.actor?.id}`}>
+                    {notification.actor?.displayName}
+                </a>
+                {t('notifications.mentioned_in')} <a {href}>{(audio as any).title}</a>
+                <span class="comment-date"> - {relativeTime}</span>
+            </h3>
+        {/if}
     {:else if notification.type === NotificationType.system}
         <h3>
             {notification.metadata?.title || t('notifications.system')}

@@ -205,4 +205,58 @@ export default class Notification extends Model {
             metadata: { message, ...metadata },
         } as any);
     }
+
+    static extractMentionUsernames(text: string): string[] {
+        const usernames = new Set<string>();
+        const re = /(^|[^a-zA-Z0-9_])@([a-zA-Z0-9_]{3,30})\b/g;
+        let m: RegExpExecArray | null;
+        while ((m = re.exec(text)) !== null) {
+            usernames.add(m[2].toLowerCase());
+        }
+        return Array.from(usernames);
+    }
+
+    /**
+     * Create mention notifications for users found in `text` that are not present in `prevText`.
+     * - actorId: who mentioned
+     * - targetType/targetId: where the mention occurred (comment or audio)
+     * - metadata: optional extra (e.g., content snippet)
+     */
+    static async createMentionsFromText(
+        actorId: string,
+        targetType: NotificationTargetType,
+        targetId: string,
+        text: string,
+        opts?: { prevText?: string; metadata?: any }
+    ) {
+        try {
+            const current = new Set(
+                Notification.extractMentionUsernames(text)
+            );
+            const prev = new Set(
+                Notification.extractMentionUsernames(opts?.prevText || "")
+            );
+            const added = Array.from(current).filter((u) => !prev.has(u));
+            if (added.length === 0) return;
+
+            const users = await User.findAll({
+                where: { name: added as any },
+            });
+            if (!users.length) return;
+
+            const payloads = users
+                .map((u) => ({
+                    userId: u.id,
+                    actorId,
+                    type: NotificationType.mention as const,
+                    targetType,
+                    targetId,
+                    metadata: opts?.metadata ?? null,
+                }));
+            if (payloads.length) await Notification.bulkCreate(payloads as any);
+        } catch (e) {
+            // best-effort; don't crash main flow
+            console.error("Failed to create mention notifications", e);
+        }
+    }
 }

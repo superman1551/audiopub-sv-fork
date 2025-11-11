@@ -29,6 +29,7 @@ import { error, fail, redirect } from "@sveltejs/kit";
 import type { Actions, PageServerLoad } from "./$types";
 import sendEmail from "$lib/server/email";
 import { Op, Sequelize } from "sequelize";
+import { NotificationTargetType } from "$lib/types";
 
 
 export const load: PageServerLoad = async (event) => {
@@ -183,6 +184,14 @@ export const actions: Actions = {
         if (payloads.length) {
             await Notification.bulkCreate(payloads as any);
         }
+        // Mentions in comment -> notify mentioned users
+        await Notification.createMentionsFromText(
+            user.id,
+            NotificationTargetType.comment,
+            commentInDatabase.id,
+            comment,
+            { metadata: { audioId: audio.id } }
+        );
         return { success: true };
     },
     delete_comment: async (event) => {

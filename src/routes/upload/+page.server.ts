@@ -20,9 +20,11 @@ import fs from "fs/promises";
 import path from "path";
 import { error, fail, redirect } from "@sveltejs/kit";
 import type { Actions, PageServerLoad } from "./$types";
-import { Audio } from "$lib/server/database";
+import { Audio, Notification } from "$lib/server/database";
+import { NotificationTargetType } from "$lib/types";
 import transcode from "$lib/server/transcode";
 import { availableLocales } from "$lib/i18n";
+import sendEmail from "$lib/server/email";
 
 export const load: PageServerLoad = (event) => {
     const user = event.locals.user;
@@ -102,11 +104,56 @@ export const actions: Actions = {
         await fs.mkdir(path.dirname(audio.path), { recursive: true });
         const arr = await file.arrayBuffer();
         await fs.writeFile(audio.path, new Uint8Array(arr));
-        transcode(audio.path).catch(async (err) => {
-            console.error(err);
-            await audio.destroy();
-            await fs.unlink(audio.path);
-        });
+
+        // Transcode synchronously so we can surface errors to the user.
+        try {
+            await transcode(audio.path);
+        } catch (e: any) {
+            console.error("Transcode failed", e);
+            // Notify admins if configured
+            try {
+                const admin = process.env.ADMIN_EMAIL;
+                if (admin) {
+                    await sendEmail(
+                        admin,
+                        "Audiopub: Transcode failed",
+                        `<p>Transcoding failed on upload.</p>
+                         <ul>
+                           <li>Audio ID: ${audio.id}</li>
+                           <li>User ID: ${user.id}</li>
+                           <li>Error: ${String(e?.message || e)}</li>
+                         </ul>`
+                    );
+                }
+            } catch (notifyErr) {
+                console.error("Failed to notify admin about transcode error", notifyErr);
+            }
+
+            // Clean up created entities and file
+            try { await fs.unlink(audio.path); } catch {}
+            try { await audio.destroy(); } catch {}
+
+            // Return a friendly, localized error via key; preserve inputs
+            const isFfmpegMissing = typeof e?.message === 'string' && /ffmpeg/i.test(e.message) && /not (recognized|found)/i.test(e.message);
+            return fail(500, {
+                errorKey: isFfmpegMissing ? 'upload.error.ffmpeg_missing' : 'upload.error.transcode',
+                title,
+                description,
+                language: languageRaw || 'und',
+            });
+        }
+
+        // Mentions in initial description (if any)
+        if (description) {
+            await Notification.createMentionsFromText(
+                user.id,
+                NotificationTargetType.audio,
+                audio.id,
+                description,
+                { metadata: { audioId: audio.id, content: description.slice(0, 400) } }
+            );
+        }
+
         return redirect(303, `/listen/${audio.id}`);
     },
 };

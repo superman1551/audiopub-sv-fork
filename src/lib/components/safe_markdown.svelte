@@ -25,10 +25,23 @@
     import UntrustedLink from "./untrusted_link.svelte";
 
     export let source: string;
+
+    // Convert @username to markdown links pointing to /u/username
+    function linkifyMentions(text: string): string {
+        if (!text) return text;
+        // Replace occurrences not preceded by word char, to reduce emails/URLs impact
+        // e.g., " hello @user" => " hello [@user](/u/user)"
+        // usernames: 3-30 chars, letters, numbers, underscore
+        return text.replace(/(^|[^a-zA-Z0-9_])@([a-zA-Z0-9_]{3,30})\b/g, (_match, p1, uname) => {
+            return `${p1}[@${uname}](/u/${uname})`;
+        });
+    }
+
+    $: processed = linkifyMentions(source);
 </script>
 
 <SvelteMarkdown
-    {source}
+    source={processed}
     renderers={{
         ...excludeRenderersOnly(["heading", "image"]),
         html: buildUnsupportedHTML(),
