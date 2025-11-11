@@ -24,6 +24,7 @@
     import { NotificationTargetType, NotificationType } from "$lib/types";
     import { formatRelative } from "date-fns";
     import SafeMarkdown from "./safe_markdown.svelte";
+    import { t, locale } from "$lib/i18n";
 
     export let notification: ClientsideResolvedNotification;
 
@@ -54,6 +55,7 @@
     }
 
     $: href = linkFor(notification);
+    $: $locale;
 </script>
 
 <article class:unread={isUnread}>
@@ -63,7 +65,7 @@
             <a href={`/user/${notification.actor?.id}`}>
                 {notification.actor?.displayName}
             </a>
-            Commented on <a {href}>{comment.audio?.title}</a>
+            {t('notifications.commented_on')} <a {href}>{comment.audio?.title}</a>
             <span class="comment-date"> - {relativeTime}</span>
         </h3>
         <SafeMarkdown source={comment.content} />
@@ -73,12 +75,12 @@
             <a href={`/user/${notification.actor?.id}`}>
                 {notification.actor?.displayName}
             </a>
-            favorited <a {href}>{(audio as any).title}</a>
+            {t('notifications.favorited')} <a {href}>{(audio as any).title}</a>
             <span class="comment-date"> - {relativeTime}</span>
         </h3>
     {:else if notification.type === NotificationType.system}
         <h3>
-            {notification.metadata?.title || "System"}
+            {notification.metadata?.title || t('notifications.system')}
             <span class="comment-date"> - {relativeTime}</span>
         </h3>
         {#if notification.metadata?.content}

@@ -20,25 +20,25 @@
     import { enhance } from "$app/forms";
     import AudioList from "$lib/components/audio_list.svelte";
     import title from "$lib/title.js";
-    import { onMount } from "svelte";
+    import { t, locale } from "$lib/i18n";
     export let data;
-    onMount(() => title.set(`${data.profileUser.displayName}'s Profile`));
+    $: { $locale; title.set(t('title.user_profile', { name: data.profileUser.displayName })); }
 </script>
 
-<h1>{data.profileUser.displayName}'s Profile</h1>
+<h1>{data.profileUser.displayName}'s {t('user.profile')}</h1>
 
 <table>
     <tbody>
         <tr>
-            <td>Username</td>
+            <td>{t('user.username')}</td>
             <td>{data.profileUser.name}</td>
         </tr>
         <tr>
-            <td>Display Name</td>
+            <td>{t('user.display_name')}</td>
             <td>{data.profileUser.displayName}</td>
         </tr>
         <tr>
-            <td>Uploads</td>
+            <td>{t('user.uploads')}</td>
             <td>{data.count}</td>
         </tr>
     </tbody>
@@ -47,35 +47,35 @@
 {#if data.isAdmin}
     {#if !data.profileUser.isTrusted}
         <form use:enhance action="?/trust" method="post">
-            <button type="submit">Trust</button>
+            <button type="submit">{t('user.trust')}</button>
         </form>
     {/if}
 
     <details>
-        <summary>administrative actions</summary>
+        <summary>{t('user.admin_actions')}</summary>
         {#if !data.profileUser.isBanned}
             <form use:enhance action="?/ban" method="post">
-                <label for="ban-reason">Reason</label>
+                <label for="ban-reason">{t('user.reason')}</label>
                 <input type="text" name="reason" id="ban-reason" required />
                 <br />
-                <label for="ban-message">Message</label>
+                <label for="ban-message">{t('user.message')}</label>
                 <textarea name="message" id="ban-message"></textarea>
-                <button type="submit">Ban</button>
+                <button type="submit">{t('user.ban')}</button>
             </form>
         {/if}
         <br />
         <form use:enhance action="?/warn" method="post">
-            <label for="warn-reason">Reason</label>
+            <label for="warn-reason">{t('user.reason')}</label>
             <input type="text" name="reason" id="warn-reason" required />
             <br />
-            <label for="warn-message">Message</label>
+            <label for="warn-message">{t('user.message')}</label>
             <textarea name="message" id="warn-message"></textarea>
-            <button type="submit">Warn</button>
+            <button type="submit">{t('user.warn')}</button>
         </form>
     </details>
 {/if}
 
-<h2>Uploads</h2>
+<h2>{t('user.uploads_h2')}</h2>
 
 <AudioList
     audios={data.audios}

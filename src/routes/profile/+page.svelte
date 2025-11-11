@@ -22,14 +22,14 @@
     import type { ActionData } from "./$types";
     import AudioList from "$lib/components/audio_list.svelte";
     import title from "$lib/title";
-    import { onMount } from "svelte";
-    onMount(() => title.set("Your profile"));
+    import { t, locale } from "$lib/i18n";
+    $: { $locale; title.set(t('title.profile')); }
 
     export let data: PageData;
     export let form: ActionData;
 </script>
 
-<h1>Your Profile</h1>
+<h1>{t('profile.h1')}</h1>
 
 <form use:enhance method="POST">
     {#if form?.message}
@@ -38,9 +38,9 @@
         </div>
     {/if}
 
-    <label for="email">Email:</label>
+    <label for="email">{t('profile.email')}:</label>
     <input type="email" id="email" name="email" value={data.email} />
-    <label for="displayName">Display Name:</label>
+    <label for="displayName">{t('profile.display_name')}:</label>
     <input
         type="text"
         id="displayName"
@@ -49,7 +49,7 @@
         minlength="3"
         maxlength="30"
     />
-    <label for="password">New Password:</label>
+    <label for="password">{t('profile.new_password')}:</label>
     <input
         type="password"
         id="password"
@@ -57,10 +57,10 @@
         minlength="8"
         maxlength="64"
     />
-    <button type="submit">Update</button>
+    <button type="submit">{t('profile.update')}</button>
 </form>
 
-<h2>Your Uploads</h2>
+<h2>{t('profile.uploads')}</h2>
 
 <AudioList
     audios={data.audios}

@@ -19,20 +19,23 @@
 <script lang="ts">
   import Comment from "./comment.svelte";
   import type { ClientsideComment, ClientsideUser } from "$lib/types";
+  import { t, locale } from "$lib/i18n";
 
   export let comments: ClientsideComment[];
   export let user: ClientsideUser | undefined = undefined;
   export let isAdmin: boolean = false;
+
+  $: $locale;
 </script>
 
-<section role="group" aria-label="Comments">
-  <h2>Comments</h2>
+<section role="group" aria-label={t('comment_list.aria_label')}>
+  <h2>{t('comment_list.h2')}</h2>
   {#if comments.length > 0}
     {#each comments as comment (comment.id)}
       <Comment {comment} {user} {isAdmin} />
     {/each}
   {:else}
-    <p>No comments yet</p>
+    <p>{t('comment_list.no_comments')}</p>
   {/if}
 </section>
 

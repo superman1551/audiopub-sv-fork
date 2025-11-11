@@ -17,10 +17,10 @@
   along with this program. If not, see <https://www.gnu.org/licenses/>.
 -->
 <script lang="ts">
-    import { enhance } from "$app/forms";
     import title from "$lib/title";
     import { onDestroy, onMount } from "svelte";
     import type { LayoutData } from "./$types";
+    import { t, locale, availableLocales } from "$lib/i18n";
 
     export let data: LayoutData;
 
@@ -97,48 +97,56 @@
     });
 </script>
 
-<svelte head>
-    <title
-        >{unreadCount > 0 ? `(${unreadCount}) ` : ""}{$title} | audiopub</title
-    >
-</svelte>
+<svelte:head>
+    <title>{unreadCount > 0 ? `(${unreadCount}) ` : ""}{$title} | {t('title.brand')}</title></svelte:head>
 
 <header>
-    <nav>
-        <a href="/">Home</a>
-        <a href="/quickfeed">Quickfeed</a>
+    <nav aria-label={t('nav.primary')}>
+        <a href="/">{t('nav.home')}</a>
+        <a href="/quickfeed">{t('nav.quickfeed')}</a>
         {#if data.user}
             {#if !data.user.isVerified}
                 <p>
-                    <b>WARNING:</b> Your account is not verified. Please verify your
-                    account to access all features.
+                    <b>{t('layout.warning_label')}</b> {t('layout.verify_warning')}
                 </p>
-                <a href="/verify">Verify</a>
+                <a href="/verify">{t('verify.button')}</a>
             {:else}
                 <a href="/notifications" class="notifications-link">
-                    Notifications
+                    {t('nav.notifications')}
                     {#if unreadCount > 0}
                         <span
                             class="badge"
-                            aria-label={`${unreadCount} unread notifications`}
+                            aria-label={t('notifications.unread_badge', { count: unreadCount })}
                             >{unreadCount}</span
                         >
                     {/if}
                 </a>
-                <a href="/favorites">Favorites</a>
-                <a href="/upload">Upload</a>
-                <a href="/profile">Profile</a>
-                <a href="/logout">Logout</a>
+                <a href="/favorites">{t('nav.favorites')}</a>
+                <a href="/upload">{t('nav.upload')}</a>
+                <a href="/profile">{t('nav.profile')}</a>
+                <a href="/logout">{t('nav.logout')}</a>
             {/if}
         {:else}
-            <a href="/login">Login</a>
-            <a href="/register">Register</a>
+            <a href="/login">{t('nav.login')}</a>
+            <a href="/register">{t('nav.register')}</a>
         {/if}
     </nav>
-    <form use:enhance action="/search" method="get">
-        <input type="text" name="q" placeholder="Search..." />
-        <button type="submit">Search</button>
+    <form action="/search" method="get" role="search" aria-label={t('search.aria_label')}>
+        <input type="text" name="q" placeholder={t('search.placeholder')} />
+        <button type="submit">{t('search.button')}</button>
     </form>
+    <div class="locale-switcher">
+        <label for="locale">{t('idioma')}:</label>
+        <select
+            id="locale"
+            bind:value={$locale}
+            on:change={(e) => locale.set((e.target as HTMLSelectElement).value as typeof $locale)}
+        >
+            {#each availableLocales as l}
+                <option value={l.code}>{l.nativeName}</option>
+            {/each}
+        </select>
+    </div>
 </header>
 <main>
     <slot />
@@ -147,21 +155,15 @@
 <hr />
 <footer>
     <div class="copyright">
+        <p>{t('footer.rights')}</p>
         <p>
-            All rights to the audio files and associated content uploaded to
-            this platform remain with their respective creators or rightful
-            owners.
-        </p>
-        <p>
-            For inquiries regarding content ownership or usage, please contact:
+            {t('footer.contact')}:
             <a href="mailto:cccefg2@gmail.com"> cccefg2@gmail.com</a>
-            I'm sorry for the unprofessional email address, I'm still working on
-            it.
+            {t('footer.email_note')}
         </p>
-        <a href="/agreement">Our Agreement</a>
+        <a href="/agreement">{t('footer.agreement')}</a>
         <p>
-            Audiopub is open source software. The code is licensed under the GNU
-            AFFERO GENERAL PUBLIC LICENSE. You can find the source code on
+            {t('footer.open_source')}
             <a href="https://github.com/the-byte-bender/audiopub-sv">GitHub</a>.
         </p>
     </div>
@@ -171,13 +173,14 @@
     header {
         background-color: #f0f0f0;
         padding: 20px;
-        display: flex;
-        justify-content: space-between;
+        display: grid;
+        grid-template-columns: 1fr auto auto;
         align-items: center;
         position: sticky;
         top: 0;
         z-index: 1000;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        gap: 1rem;
     }
 
     nav a {
@@ -217,5 +220,11 @@
         background-color: #eee;
         padding: 20px;
         text-align: center;
+    }
+
+    .locale-switcher {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
     }
 </style>

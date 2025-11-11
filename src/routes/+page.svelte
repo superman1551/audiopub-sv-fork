@@ -20,85 +20,86 @@
     import title from "$lib/title";
     import AudioList from "$lib/components/audio_list.svelte";
     import type { PageData } from "./$types";
-    import { onMount } from "svelte";
+    import { t, locale } from "$lib/i18n";
 
     export let data: PageData;
-    title.set("Home");
+    $: { $locale; title.set(t('title.home')); }
 
     $: sortDescription = (() => {
-        let fieldDesc = "";
+        const localeSignal = $locale;
+        void localeSignal;
+        let fieldKey = "home.field.date";
         switch (data.sortField) {
             case "createdAt":
-                fieldDesc = "date";
+                fieldKey = "home.field.date";
                 break;
             case "plays":
-                fieldDesc = "play count";
+                fieldKey = "home.field.playCount";
                 break;
             case "favoriteCount":
-                fieldDesc = "favorite count";
+                fieldKey = "home.field.favoriteCount";
                 break;
             case "title":
-                fieldDesc = "title";
+                fieldKey = "home.field.title";
                 break;
             case "random":
-                fieldDesc = "random";
+                fieldKey = "home.field.random";
                 break;
             default:
-                fieldDesc = "date";
+                fieldKey = "home.field.date";
         }
-        const orderDesc =
+        const orderKey =
             data.sortField === "random"
                 ? ""
                 : data.sortOrder === "DESC"
-                  ? "descending"
-                  : "ascending";
-        return `${fieldDesc} ${orderDesc}`.trim();
+                  ? "home.order.word.desc"
+                  : "home.order.word.asc";
+        return `${t(fieldKey)} ${orderKey ? t(orderKey) : ""}`.trim();
     })();
 </script>
 
-<h1>Welcome to Audiopub</h1>
+<h1>{t('home.h1')}</h1>
 
 <form method="GET" action="/">
-    <label for="sort">Sort by:</label>
+    <label for="sort">{t('home.sortBy')}</label>
     <select name="sort" id="sort">
         <option value="createdAt" selected={data.sortField === "createdAt"}
-            >Date</option
+            >{t('home.sort.date')}</option
         >
         <option value="plays" selected={data.sortField === "plays"}
-            >Play Count</option
+            >{t('home.sort.playCount')}</option
         >
         <option value="favoriteCount" selected={data.sortField === "favoriteCount"}
-            >Favorite Count</option
+            >{t('home.sort.favoriteCount')}</option
         >
         <option value="title" selected={data.sortField === "title"}
-            >Title</option
+            >{t('home.sort.title')}</option
         >
         <option value="random" selected={data.sortField === "random"}
-            >Random</option
+            >{t('home.sort.random')}</option
         >
     </select>
     <br />
     {#if data.sortField !== "random"}
-        <label for="order">Order:</label>
+        <label for="order">{t('home.order')}</label>
         <select name="order" id="order">
             <option value="DESC" selected={data.sortOrder === "DESC"}
-                >Descending</option
+                >{t('home.order.desc')}</option
             >
             <option value="ASC" selected={data.sortOrder === "ASC"}
-                >Ascending</option
+                >{t('home.order.asc')}</option
             >
         </select>
         <br />
     {/if}
-    <button type="submit">Sort</button>
+    <button type="submit">{t('home.sort.button')}</button>
 </form>
 
-<h2>Audio list sorted by {sortDescription}</h2>
+<h2>{t('home.list.prefix')} {sortDescription}</h2>
 
 <AudioList
     audios={data.audios}
     page={data.page}
     totalPages={data.totalPages}
-    currentUser={data.user}
     paginationBaseUrl={`/?sort=${data.sortField}${data.sortField === "random" ? "" : "&order=" + data.sortOrder}`}
 />

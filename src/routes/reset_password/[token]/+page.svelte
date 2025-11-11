@@ -20,18 +20,16 @@
     import { enhance } from "$app/forms";
     import title from "$lib/title";
     import type { ActionData } from "./$types";
-    import { onMount } from "svelte";
-    onMount(() => title.set("Reset Password"));
+    import { t, locale } from "$lib/i18n";
+    $: { $locale; title.set(t('title.reset_password')); }
     export let data;
 
     export let form: ActionData;
 </script>
 
-<h1>Reset your password</h1>
+<h1>{t('reset_password.h1')}</h1>
 
-<p>
-    This is the last step. Just enter your new password and you're good to go.
-</p>
+<p>{t('reset_password.text')}</p>
 
 <form use:enhance method="post">
     {#if form?.message}
@@ -42,19 +40,19 @@
 
     <input type="hidden" name="token" value={data.token} />
     <div class="form-group">
-        <label for="password">New password</label>
+        <label for="password">{t('reset_password.password')}</label>
         <input
             type="password"
             id="password"
             name="password"
-            placeholder="New password"
+            placeholder={t('reset_password.password')}
             class="form-control"
             minlength="8"
             maxlength="64"
             required
         />
     </div>
-    <button type="submit" class="btn">Reset password</button>
+    <button type="submit" class="btn">{t('reset_password.button')}</button>
 </form>
 
 <style>

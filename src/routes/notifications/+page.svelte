@@ -21,13 +21,16 @@
     import NotificationItem from "$lib/components/notification.svelte";
     import { enhance } from "$app/forms";
     import type { PageData } from "./$types";
+    import title from "$lib/title";
+    import { t, locale } from "$lib/i18n";
     export let data: PageData;
+    $: { $locale; title.set(t('title.notifications')); }
 </script>
 
-<h1>Notifications</h1>
+<h1>{t('notifications.h1')}</h1>
 
 {#if data.notifications.length === 0}
-    <p>No notifications.</p>
+    <p>{t('notifications.none')}</p>
 {:else}
     <ul class="list" role="list">
         {#each data.notifications as n (n.id)}
@@ -41,7 +44,7 @@
                         class="delete-form"
                     >
                         <input type="hidden" name="id" value={n.id} />
-                        <button type="submit" class="delete-btn">Delete</button>
+                        <button type="submit" class="delete-btn">{t('notifications.delete')}</button>
                     </form>
                 {/if}
             </li>
@@ -49,7 +52,7 @@
     </ul>
 
     <form use:enhance method="POST" action="?/clear_all">
-        <button type="submit">Clear all</button>
+        <button type="submit">{t('notifications.clear_all')}</button>
     </form>
 {/if}
 

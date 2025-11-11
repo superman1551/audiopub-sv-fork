@@ -19,12 +19,12 @@
 <script lang="ts">
     import { enhance } from "$app/forms";
     import title from "$lib/title";
-    import { onMount } from "svelte";
-    onMount(() => title.set("Upload Audio"));
+    import { t, locale } from "$lib/i18n";
+    $: { $locale; title.set(t('title.upload')); }
     let submitting = false;
 </script>
 
-<h1>Upload Audio</h1>
+<h1>{t('upload.h1')}</h1>
 
 <form
     use:enhance={() => {
@@ -38,7 +38,7 @@
     enctype="multipart/form-data"
 >
     <div class="form-group">
-        <label for="title">Title:</label>
+        <label for="title">{t('upload.title')}</label>
         <input
             type="text"
             id="title"
@@ -59,7 +59,7 @@
         ></textarea>
     </div>
     <div class="form-group">
-        <label for="audio">Audio File:</label>
+        <label for="audio">{t('upload.file')}</label>
         <input
             type="file"
             id="audio"
@@ -69,17 +69,13 @@
         />
     </div>
     <p class="info">
-        Most known audio formats should be supported. Your audio may be
-        transcoded for browsers that do not support the original format. For
-        when you hit the size limit, you can use opus at a decent bitrate as it
-        is the most efficient codec for streaming.
+        {t('upload.info.formats')}
     </p>
     <p class="info">
-        Please follow common decency and the law. Moderators and admins reserve
-        the right to remove any content that is deemed inappropriate or illegal.
+        {t('upload.info.rules')}
     </p>
     <button type="submit" class="btn" disabled={submitting}
-        >{#if submitting}Uploading...{:else}Upload{/if}</button
+        >{#if submitting}{t('upload.submitting')}{:else}{t('upload.submit')}{/if}</button
     >
 </form>
 

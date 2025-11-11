@@ -12,6 +12,7 @@
 		"db:migrate:undo": "sequelize-cli db:migrate:undo",
 		"db:create:migration": "sequelize-cli migration:generate --name",
 		"db:fix:migration": "find src/lib/server/database/migrations -name '*.js' -exec sh -c 'mv \"$1\" \"${1%.js}.cjs\"' _ {} \\;",
+		"db:reset": "npx tsx scripts/reset_db.ts",
 		"db:seed": "sequelize-cli db:seed:all",
 		"db:seed:undo": "sequelize-cli db:seed:undo:all"
 	},
@@ -42,7 +43,7 @@
 		"dotenv": "^16.4.5",
 		"express": "^4.19.2",
 		"jsonwebtoken": "^9.0.2",
-		"mailgun-js": "^0.22.0",
+		"mailgun-js": "^0.6.7",
 		"mariadb": "^3.3.1",
 		"mime-types": "^2.1.35",
 		"sequelize": "^6.37.3",

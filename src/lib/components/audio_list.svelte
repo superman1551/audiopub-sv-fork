@@ -17,12 +17,11 @@
   along with this program. If not, see <https://www.gnu.org/licenses/>.
 -->
 <script lang="ts">
-    import type { ClientsideAudio, ClientsideUser } from "$lib/types";
-    import SafeMarkdown from "./safe_markdown.svelte";
+    import type { ClientsideAudio } from "$lib/types";
     import AudioItem from "./audio_item.svelte";
+    import { t, locale } from "$lib/i18n";
     export let audios: ClientsideAudio[];
     export let groupThreshold: number = 3;
-    export let currentUser: ClientsideUser | null = null;
 
     export let paginationBaseUrl: string = "/";
     export let page: number = 1;
@@ -45,6 +44,8 @@
     }
 
     $: paginationQuerySeparator = paginationBaseUrl.includes("?") ? "&" : "?";
+
+    $: $locale;
 
     $: {
         if (groupThreshold > 0 && audios?.length > 0) {
@@ -111,18 +112,21 @@
                             ? "true"
                             : "false"}
                     >
-                        And {item.audios.length} more by {item.user.displayName}
+                        {t('audio_list.more_by', {
+                            count: item.audios.length,
+                            name: item.user.displayName
+                        })}
                     </button>
                 </h4>
                 {#if expandedGroups.get(item.id)}
                     {#each item.audios as audio (audio.id)}
-                        <AudioItem {audio} {currentUser} />
+                        <AudioItem {audio} />
                     {/each}
                 {/if}
             </div>
         {:else}
             {@const audio = item}
-            <AudioItem {audio} {currentUser} />
+            <AudioItem {audio} />
         {/if}
     {/each}
 </section>
@@ -132,14 +136,14 @@
         {#if page > 1}
             <a
                 href={`${paginationBaseUrl}${paginationQuerySeparator}page=${page - 1}`}
-                >Previous</a
+                >{t('audio_list.previous')}</a
             >
         {/if}
-        <span aria-live="polite">Page {page} of {totalPages}</span>
+        <span aria-live="polite">{t('audio_list.page', { page, totalPages })}</span>
         {#if page < totalPages}
             <a
                 href={`${paginationBaseUrl}${paginationQuerySeparator}page=${page + 1}`}
-                >Next</a
+                >{t('audio_list.next')}</a
             >
         {/if}
     </div>

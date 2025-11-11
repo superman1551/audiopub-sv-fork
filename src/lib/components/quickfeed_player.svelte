@@ -23,6 +23,7 @@
     import { onMount, onDestroy } from "svelte";
     import { enhance } from "$app/forms";
     import title from "$lib/title";
+    import { t, locale } from "$lib/i18n";
 
     export let audios: ClientsideAudio[];
     export let currentUser: ClientsideUser | null = null;
@@ -548,6 +549,11 @@
             if (!contextReady) {
                 return false;
             }
+            const context = audioContext;
+            if (!context) {
+                console.error('❌ AudioContext unavailable after ensureAudioContext');
+                return false;
+            }
             
             if (audioPool.length === 0) {
                 initializeAudioPool();
@@ -627,14 +633,14 @@
                 // Crossfade mode: start with volume 0 and filters ready
                 newSlot.fadeType = 'in';
                 newSlot.filterNode.type = 'highpass';
-                newSlot.filterNode.frequency.setValueAtTime(20000, audioContext.currentTime);
-                newSlot.gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+                newSlot.filterNode.frequency.setValueAtTime(20000, context.currentTime);
+                newSlot.gainNode.gain.setValueAtTime(0, context.currentTime);
             } else {
                 // Direct play mode: set up for immediate play
                 newSlot.fadeType = null;
                 newSlot.filterNode.type = 'lowpass';
-                newSlot.filterNode.frequency.setValueAtTime(20000, audioContext.currentTime);
-                newSlot.gainNode.gain.setValueAtTime(1, audioContext.currentTime);
+                newSlot.filterNode.frequency.setValueAtTime(20000, context.currentTime);
+                newSlot.gainNode.gain.setValueAtTime(1, context.currentTime);
             }
             
             // Step 7: Start playback and wait for actual audio output
@@ -645,7 +651,7 @@
                 if (validCurrentSlots.length > 0) {
                     waitForAudioOutput(newSlot, () => {
                         // Now start synchronized fade-out and fade-in since audio is actually playing
-                        const currentTime = audioContext!.currentTime;
+                        const currentTime = context.currentTime;
                         const fadeEndTime = currentTime + (transitionDuration / 1000);
                         
                         console.log('Starting synchronized crossfade after audio output detected');
@@ -674,12 +680,12 @@
                                     
                                     // Wait for iOS to fully stop audio before resetting filters
                                     setTimeout(() => {
-                                        if (slot.gainNode && audioContext) {
-                                            slot.gainNode.gain.setValueAtTime(1, audioContext.currentTime);
+                                        if (slot.gainNode) {
+                                            slot.gainNode.gain.setValueAtTime(1, context.currentTime);
                                         }
-                                        if (slot.filterNode && audioContext) {
+                                        if (slot.filterNode) {
                                             slot.filterNode.type = 'lowpass';
-                                            slot.filterNode.frequency.setValueAtTime(20000, audioContext.currentTime);
+                                            slot.filterNode.frequency.setValueAtTime(20000, context.currentTime);
                                         }
                                         
                                         slot.isActive = false;
@@ -690,15 +696,15 @@
                                 };
                                 
                                 // Use Web Audio timing for cleanup
-                                if (audioContext) {
-                                    const cleanupTime = audioContext.currentTime + (transitionDuration / 1000) + 0.5;
-                                    const timingGain = audioContext.createGain();
-                                    timingGain.connect(audioContext.destination);
+                                if (context) {
+                                    const cleanupTime = context.currentTime + (transitionDuration / 1000) + 0.5;
+                                    const timingGain = context.createGain();
+                                    timingGain.connect(context.destination);
                                     timingGain.gain.setValueAtTime(0, cleanupTime - 0.01);
                                     timingGain.gain.setValueAtTime(1, cleanupTime);
                                     
                                     const checkCleanup = () => {
-                                        if (audioContext!.currentTime >= cleanupTime) {
+                                        if (context.currentTime >= cleanupTime) {
                                             cleanupFadedSlot();
                                             timingGain.disconnect();
                                             return;
@@ -748,19 +754,35 @@
         }
     }
 
+    let favoritesText = "";
+    let playsText = "";
+
     $: currentAudio = audios[currentIndex];
-    $: favoritesString = (() => {
-        const count = currentAudio?.favoriteCount || 0;
-        if (count === 0) return "No favorites";
-        if (count === 1) return "1 favorite";
-        return `${count} favorites`;
-    })();
+    $: {
+        $locale;
+        const favoriteCount = currentAudio?.favoriteCount ?? 0;
+        favoritesText =
+            favoriteCount === 0
+                ? t("audio.no_favorites")
+                : favoriteCount === 1
+                ? t("audio.one_favorite")
+                : t("audio.favorites", { count: favoriteCount });
+
+        const playCount = currentAudio?.plays ?? 0;
+        playsText =
+            playCount === 0
+                ? t("plays.none")
+                : playCount === 1
+                ? t("plays.one")
+                : t("plays.many", { count: playCount });
+    }
 
     // Update page title when current audio changes
     $: if (currentAudio?.title) {
         title.set(currentAudio.title);
     } else {
-        title.set("Quickfeed");
+        $locale;
+        title.set(t("title.quickfeed"));
     }
 
     // Reactive statement to load audio when current index changes
@@ -1250,7 +1272,6 @@
                 break;
             case 'f':
             case 'F':
-                const currentAudioElement = getCurrentAudioElement();
                 event.preventDefault();
                 if (currentUser) {
                     toggleFavorite();
@@ -1268,13 +1289,8 @@
                 break;
             case 's':
             case 'S':
-                if (browser) {
-                    if (navigator.share) {
-                        navigator.share({url: `/listen/${audio.id}`});
-                    } else if (navigator.clipboard) {
-                        navigator.clipboard.writeText(window.location.origin + `/listen/${audio.id}`);
-                    }
-                }
+                event.preventDefault();
+                shareAudio();
                 break;
             default:
                 console.log('🔘 Unhandled key:', event.key);
@@ -1291,6 +1307,55 @@
                 }
             }, 1000);
         }
+    }
+
+    function shareAudio(target: ClientsideAudio | null | undefined = currentAudio) {
+        if (!browser) return;
+
+        const audioToShare = target ?? currentAudio;
+        if (!audioToShare) return;
+
+        const shareUrl = `${window.location.origin}/listen/${audioToShare.id}`;
+        const nav = navigator as Navigator & {
+            share?: (data: { url?: string; title?: string }) => Promise<void>;
+        };
+
+        if (typeof nav.share === 'function') {
+            nav.share({ url: shareUrl, title: audioToShare.title }).catch((error) => {
+                console.error('Share failed, falling back to clipboard:', error);
+                copyShareLink(shareUrl);
+            });
+            return;
+        }
+
+        copyShareLink(shareUrl);
+    }
+
+    function copyShareLink(url: string) {
+        const clipboard = navigator.clipboard;
+        if (clipboard?.writeText) {
+            clipboard
+                .writeText(url)
+                .then(() => announceStatus(t('audio_actions.share_copied')))
+                .catch((error) => console.error('Clipboard copy failed:', error));
+        } else {
+            console.warn('Clipboard API unavailable for sharing');
+        }
+    }
+
+    function isClientsideComment(value: unknown): value is ClientsideComment {
+        if (!value || typeof value !== 'object') {
+            return false;
+        }
+
+        const candidate = value as Partial<ClientsideComment>;
+        return (
+            typeof candidate.id === 'string' &&
+            typeof candidate.content === 'string' &&
+            typeof candidate.createdAt === 'string' &&
+            typeof candidate.updatedAt === 'string' &&
+            candidate.user !== undefined
+        );
     }
 
     async function loadMoreAudios() {
@@ -1344,10 +1409,7 @@
 
     async function toggleFavorite() {
         if (!currentUser || !currentAudio) return;
-        
 
-        const currentAudioElement = getCurrentAudioElement();
-        
         const formData = new FormData();
         formData.append('audioId', currentAudio.id);
         
@@ -1369,9 +1431,7 @@
                     audios[currentIndex].favoriteCount--;
                 }
                 audios = audios; // Trigger reactivity
-                
-                const currentAudioElementAfter = getCurrentAudioElement();
-                
+
                 // Announce the change for accessibility
                 const message = wasFavorited ? 'Removed from favorites' : 'Added to favorites';
                 announceStatus(message);
@@ -1598,7 +1658,7 @@
                             <div class="navigation-controls">
                                 <!-- Previous Button -->
                                 <div class="nav-button previous-button">
-                                    <button on:click={() => {goToPrevious();}} aria-label="Previous audio">
+                                    <button on:click={() => {goToPrevious();}} aria-label={t('audio_list.previous')}>
                                         <svg width="32" height="32" viewBox="0 0 24 24" fill="white">
                                             <polygon points="11,7 6,12 11,17" />
                                             <polygon points="18,7 13,12 18,17" />
@@ -1608,7 +1668,7 @@
                                 
                                 <!-- Play/Pause Button -->
                                 <div class="play-button" class:playing={isPlaying}>
-                                    <button on:click={() => {togglePlay();}} aria-label={isPlaying ? "Pause" : "Play"}>
+                                    <button on:click={() => {togglePlay();}} aria-label={isPlaying ? t('player.pause') : t('player.play')}>
                                         {#if isBuffering}
                                             <div class="loading-spinner"></div>
                                         {:else if isPlaying}
@@ -1626,7 +1686,7 @@
                                 
                                 <!-- Next Button -->
                                 <div class="nav-button next-button">
-                                    <button on:click={() => {goToNext();}} aria-label="Next audio">
+                                    <button on:click={() => {goToNext();}} aria-label={t('audio_list.next')}>
                                         <svg width="32" height="32" viewBox="0 0 24 24" fill="white">
                                             <polygon points="13,7 18,12 13,17" />
                                             <polygon points="6,7 11,12 6,17" />
@@ -1640,12 +1700,11 @@
                                         <div 
                                             class="progress-fill" 
                                             style="width: {duration > 0 ? (currentTime / duration) * 100 : 0}%"
-                                            title="Progress: {currentTime.toFixed(1)}s / {duration.toFixed(1)}s ({duration > 0 ? ((currentTime / duration) * 100).toFixed(1) : 0}%)"
                                         ></div>
                                     </div>
                                     <div class="time-display">
-                                        <span title="Current time: {currentTime}">{formatTime(currentTime)}</span>
-                                        <span title="Duration: {duration}">{formatTime(duration)}</span>
+                                        <span>{formatTime(currentTime)}</span>
+                                        <span>{formatTime(duration)}</span>
                                     </div>
 
                                 </div>
@@ -1664,9 +1723,9 @@
                             <SafeMarkdown source={audio.description} />
                         </div>
                         <div class="stats">
-                            <span>{audio.playsString}</span>
+                            <span>{playsText}</span>
                             <span>•</span>
-                            <span>{favoritesString}</span>
+                            <span>{favoritesText}</span>
                         </div>
                     </div>
                     
@@ -1677,7 +1736,7 @@
                                 class="action-btn favorite-btn" 
                                 class:favorited={audio.isFavorited}
                                 on:click={() => {toggleFavorite();}}
-                                aria-label={audio.isFavorited ? "Remove from favorites" : "Add to favorites"}
+                                aria-label={audio.isFavorited ? t('listen.unfavorite') : t('listen.favorite')}
                             >
                                 <svg width="32" height="32" viewBox="0 0 24 24" fill={audio.isFavorited ? "#ff6b6b" : "none"} stroke="white" stroke-width="2">
                                     <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
@@ -1689,7 +1748,7 @@
                         <button 
                             class="action-btn comment-btn"
                             on:click={() => openCommentsDialog(currentIndex)}
-                            aria-label="Comments"
+                            aria-label={t('comments.title')}
                         >
                             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
                                 <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
@@ -1698,16 +1757,8 @@
                         
                         <button 
                             class="action-btn share-btn"
-                            on:click={() => {
-                                if (browser) {
-                                    if (navigator.share) {
-                                        navigator.share({url: `/listen/${audio.id}`});
-                                    } else if (navigator.clipboard) {
-                                        navigator.clipboard.writeText(window.location.origin + `/listen/${audio.id}`);
-                                    }
-                                }
-                            }}
-                            aria-label="Share"
+                            on:click={() => shareAudio(audio)}
+                            aria-label={t('audio_actions.share')}
                         >
                             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
                                 <circle cx="18" cy="5" r="3"></circle>
@@ -1728,7 +1779,7 @@
             <div class="audio-item loading-item">
                 <div class="loading-content">
                     <div class="loading-spinner"></div>
-                    <p>Loading more audios...</p>
+                    <p>{t('common.loading_more_audios')}</p>
                 </div>
             </div>
         {/if}
@@ -1743,18 +1794,18 @@
     >
         {#if currentAudio}
             <div class="comments-header">
-                <h3>Comments</h3>
-                <button class="close-btn" on:click={closeCommentsDialog} aria-label="Close comments dialog">✕</button>
+                <h3>{t('comments.title')}</h3>
+                <button class="close-btn" on:click={closeCommentsDialog} aria-label={t('comments.close_aria')}>✕</button>
             </div>
                 <div class="comments-content">
                     {#if currentAudio.comments && currentAudio.comments.length > 0}
                         <CommentList 
                             comments={currentAudio.comments} 
-                            user={currentUser} 
+                            user={currentUser ?? undefined} 
                             isAdmin={false}
                         />
                     {:else}
-                        <p class="no-comments">No comments yet. Be the first to comment!</p>
+                        <p class="no-comments">{t('comments.none')}</p>
                     {/if}
                     
                     {#if currentUser && !currentUser.isBanned}
@@ -1767,27 +1818,32 @@
                                     // Let SvelteKit handle its updates first
                                     await update();
                                     
-                                    if (result.type === 'success' && result.data?.comment) {
-                                        console.log('✅ Comment posted successfully:', result.data.comment);
-                                        
-                                        // Ensure comments array exists
-                                        if (!audios[currentIndex].comments) {
-                                            audios[currentIndex].comments = [];
+                                    if (result.type === 'success') {
+                                        const newComment = result.data?.comment;
+                                        if (isClientsideComment(newComment)) {
+                                            console.log('✅ Comment posted successfully:', newComment);
+
+                                            // Ensure comments array exists
+                                            if (!audios[currentIndex].comments) {
+                                                audios[currentIndex].comments = [];
+                                            }
+
+                                            // Add the new comment to local state with proper reactivity
+                                            audios[currentIndex] = {
+                                                ...audios[currentIndex],
+                                                comments: [...(audios[currentIndex].comments || []), newComment]
+                                            };
+
+                                            // Trigger reactivity explicitly
+                                            audios = [...audios];
+
+                                            console.log('📝 Updated audio comments:', audios[currentIndex].comments?.length);
+
+                                            // Clear the form
+                                            formElement.reset();
+                                        } else if (newComment !== undefined) {
+                                            console.warn('⚠️ Received unexpected comment payload:', newComment);
                                         }
-                                        
-                                        // Add the new comment to local state with proper reactivity
-                                        audios[currentIndex] = {
-                                            ...audios[currentIndex],
-                                            comments: [...(audios[currentIndex].comments || []), result.data.comment]
-                                        };
-                                        
-                                        // Trigger reactivity explicitly
-                                        audios = [...audios];
-                                        
-                                        console.log('📝 Updated audio comments:', audios[currentIndex].comments?.length);
-                                        
-                                        // Clear the form
-                                        formElement.reset();
                                     } else if (result.type === 'failure') {
                                         console.error('❌ Comment failed:', result.data?.message);
                                     }
@@ -1799,21 +1855,21 @@
                         >
                             {#if !currentUser.isTrusted}
                                 <p class="warning">
-                                    You're not trusted yet. Your comments will be reviewed before being shown.
+                                    {t('listen.not_trusted_warning')}
                                 </p>
                             {/if}
                             <textarea 
                                 name="comment" 
-                                placeholder="Add a comment..." 
+                                placeholder={t('comments.placeholder')} 
                                 required 
                                 maxlength="4000"
                                 rows="3"
                             ></textarea>
-                            <button type="submit">Post Comment</button>
+                            <button type="submit">{t('comments.post')}</button>
                         </form>
                     {:else if !currentUser}
                         <p class="login-prompt">
-                            <a href="/login">Login</a> to comment
+                            <a href="/login">{t('nav.login')}</a> {t('comments.to_comment')}
                         </p>
                     {/if}
                 </div>
@@ -1828,7 +1884,7 @@
         <div class="transition-indicator">
             <div class="transition-content">
                 <div class="transition-spinner"></div>
-                <span>Crossfading...</span>
+                <span>{t('player.crossfading')}</span>
             </div>
         </div>
     {/if}
@@ -1857,16 +1913,16 @@
     <!-- Keyboard Hints (Desktop) / Touch Hints (Mobile) -->
     <div class="control-hints">
         <div class="desktop-hints">
-            <div class="hint">↑↓ Navigate</div>
-            <div class="hint">Space Play/Pause</div>
-            <div class="hint">←→ Seek</div>
-            <div class="hint">C Comments</div>
-            {#if currentUser}<div class="hint">F Favorite</div>{/if}
+            <div class="hint">{t('player.hint.navigate')}</div>
+            <div class="hint">{t('player.hint.playpause')}</div>
+            <div class="hint">{t('player.hint.seek')}</div>
+            <div class="hint">{t('player.hint.comments')}</div>
+            {#if currentUser}<div class="hint">{t('player.hint.favorite')}</div>{/if}
         </div>
         <div class="mobile-hints">
-            <div class="hint">Swipe ↑↓ Navigate</div>
-            <div class="hint">Tap Play/Pause</div>
-            <div class="hint">Swipe ←→ Seek</div>
+            <div class="hint">{t('player.hint.mobile.navigate')}</div>
+            <div class="hint">{t('player.hint.mobile.playpause')}</div>
+            <div class="hint">{t('player.hint.mobile.seek')}</div>
         </div>
     </div>
 </div>

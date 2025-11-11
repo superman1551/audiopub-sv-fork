@@ -17,31 +17,46 @@
   along with this program. If not, see <https://www.gnu.org/licenses/>.
 -->
 <script lang="ts">
-    import type { ClientsideAudio, ClientsideUser } from "$lib/types";
+    import type { ClientsideAudio } from "$lib/types";
     import SafeMarkdown from "./safe_markdown.svelte";
+    import { t, locale } from "$lib/i18n";
 
     export let audio: ClientsideAudio;
-    export let currentUser: ClientsideUser | null = null;
 
-    $: favoritesString = (() => {
+    let favoritesText = "";
+    let playsText = "";
+
+    $: {
+        $locale;
         const count = audio.favoriteCount || 0;
-        if (count === 0) return "No favorites";
-        if (count === 1) return "1 favorite";
-        return `${count} favorites`;
-    })();
+        favoritesText =
+            count === 0
+                ? t("audio.no_favorites")
+                : count === 1
+                ? t("audio.one_favorite")
+                : t("audio.favorites", { count });
+
+        const plays = audio.plays ?? 0;
+        playsText =
+            plays === 0
+                ? t("plays.none")
+                : plays === 1
+                ? t("plays.one")
+                : t("plays.many", { count: plays });
+    }
 </script>
 
 <article class="audio-item">
     <h3>
         {#if audio.user && !audio.user.isTrusted}
-            <span style="color: red">(Pending review)</span> |{" "}
+            <span style="color: red">({t('audio.pending_review')})</span> |{" "}
         {/if}
         <a href={`/listen/${audio.id}`}>{audio.title}</a>
-        <span class="stats"> | {audio.playsString} | {favoritesString}</span>
+        <span class="stats"> | {playsText} | {favoritesText}</span>
     </h3>
     {#if audio.user}
         <p>
-            By <a href={`/user/${audio.user.id}`}>{audio.user.displayName}</a>
+            {t('audio.by')} <a href={`/user/${audio.user.id}`}>{audio.user.displayName}</a>
         </p>
     {/if}
     <SafeMarkdown source={audio.description} />

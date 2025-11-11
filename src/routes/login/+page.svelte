@@ -20,14 +20,13 @@
     import { enhance } from "$app/forms";
     import title from "$lib/title";
     import type { ActionData } from "./$types";
-    import { onMount } from "svelte";
+    import { t, locale } from "$lib/i18n";
 
     export let form: ActionData;
-
-    onMount(() => title.set("Login"));
+    $: { $locale; title.set(t('title.login')); }
 </script>
 
-<h1>Login</h1>
+<h1>{t('login.h1')}</h1>
 
 <form use:enhance method="POST">
     {#if form?.message}
@@ -37,7 +36,7 @@
     {/if}
 
     <div class="form-group">
-        <label for="email">Email:</label>
+        <label for="email">{t('login.email')}:</label>
         <input
             type="email"
             id="email"
@@ -47,7 +46,7 @@
         />
     </div>
     <div class="form-group">
-        <label for="password">Password:</label>
+        <label for="password">{t('login.password')}:</label>
         <input
             type="password"
             id="password"
@@ -56,11 +55,11 @@
             class="form-control"
         />
     </div>
-    <button type="submit" class="btn">Login</button>
+    <button type="submit" class="btn">{t('login.button')}</button>
 </form>
 <div class="links">
-    <a href="/forgot_password">Forgot your password?</a>
-    <a href="/register">Don't have an account? Register here</a>
+    <a href="/forgot_password">{t('login.forgot')}</a>
+    <a href="/register">{t('login.no_account')}</a>
 </div>
 
 <style>

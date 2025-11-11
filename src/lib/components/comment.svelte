@@ -22,6 +22,7 @@
     import Modal from "./modal.svelte";
     import { enhance } from "$app/forms";
     import SafeMarkdown from "./safe_markdown.svelte";
+    import { t, locale } from "$lib/i18n";
 
     export let comment: ClientsideComment;
     export let user: ClientsideUser | undefined = undefined;
@@ -31,12 +32,14 @@
     $: commentDate = comment
         ? formatRelative(new Date(comment.createdAt), new Date())
         : "";
+
+    $: $locale;
 </script>
 
 <div class="comment">
     <h3>
         {#if comment.user && !comment.user.isTrusted}
-            <span style="color: red">(Pending review)</span> |{" "}
+            <span style="color: red">({t('comment.pending_review')})</span> |{" "}
         {/if}
 
         <a href={`/user/${comment.user.id}`}>{comment.user.displayName}</a>
@@ -46,19 +49,19 @@
     {#if isAdmin || (user && user.id === comment.user.id)}
         <div id="comment-actions">
             <button on:click={() => (isDeletionModalVisible = true)}
-                >Delete</button
+                >{t('comment.delete')}</button
             >
             <Modal bind:visible={isDeletionModalVisible}>
-                <h2>Delete this comment?</h2>
-                <p>Are you sure? This action cannot be undone.</p>
-                <p>Comment content:</p>
+                <h2>{t('comment.delete_confirm')}</h2>
+                <p>{t('comment.delete_warning')}</p>
+                <p>{t('comment.content')}:</p>
                 <pre>{comment.content}</pre>
                 <button on:click={() => (isDeletionModalVisible = false)}
-                    >Cancel</button
+                    >{t('comment.cancel')}</button
                 >
                 <form use:enhance action="?/delete_comment" method="post">
                     <input type="hidden" name="id" value={comment.id} />
-                    <button type="submit">Confirm delete</button>
+                    <button type="submit">{t('comment.delete_confirm_button')}</button>
                 </form>
             </Modal>
         </div>

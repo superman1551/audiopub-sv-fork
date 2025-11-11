@@ -20,19 +20,15 @@
     import { enhance } from "$app/forms";
     import title from "$lib/title";
     import type { ActionData } from "./$types";
-    import { onMount } from "svelte";
+    import { t, locale } from "$lib/i18n";
 
     export let form: ActionData;
-
-    onMount(() => title.set("Verify your email"));
+    $: { $locale; title.set(t('title.verify')); }
 </script>
 
-<h1>Verify your email</h1>
+<h1>{t('verify.h1')}</h1>
 
-<p>
-    Go to your email inbox. We've sent you a verification token there. Enter it
-    below to verify your email address.
-</p>
+<p>{t('verify.text')}</p>
 
 <form use:enhance method="post">
     {#if form?.message}
@@ -42,16 +38,16 @@
     {/if}
 
     <div class="form-group">
-        <label for="token">Verification token</label>
+        <label for="token">{t('verify.token')}</label>
         <input
             type="text"
             id="token"
             name="token"
-            placeholder="Verification token"
+            placeholder={t('verify.token')}
             class="form-control"
         />
     </div>
-    <button type="submit" class="btn">Verify</button>
+    <button type="submit" class="btn">{t('verify.button')}</button>
 </form>
 
 <style>
