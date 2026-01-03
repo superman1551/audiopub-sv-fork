@@ -43,7 +43,6 @@
             name="username"
             required
             autofocus
->>>>>>> origin/main
             minlength="3"
             maxlength="24"
             class="form-control"

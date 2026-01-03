@@ -198,7 +198,6 @@
         font-weight: bold;
     }
 
->>>>>>> origin/main
     /* Styling for the audio details section */
     .audio-details {
         border: 1px solid #ccc;
