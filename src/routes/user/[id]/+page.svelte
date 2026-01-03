@@ -20,6 +20,7 @@
     import { enhance } from "$app/forms";
     import AudioList from "$lib/components/audio_list.svelte";
     import title from "$lib/title.js";
+<<<<<<< HEAD
     import { t, locale } from "$lib/i18n";
     import SafeMarkdown from "$lib/components/safe_markdown.svelte";
     export let data;
@@ -33,10 +34,19 @@
         <SafeMarkdown source={data.profileUser.bio} />
     </div>
 {/if}
+=======
+    import { onMount } from "svelte";
+    export let data;
+    onMount(() => title.set(`${data.profileUser.displayName}'s Profile`));
+</script>
+
+<h1>{data.profileUser.displayName}'s Profile</h1>
+>>>>>>> origin/main
 
 <table>
     <tbody>
         <tr>
+<<<<<<< HEAD
             <td>{t('user.username')}</td>
             <td>{data.profileUser.name}</td>
         </tr>
@@ -46,6 +56,17 @@
         </tr>
         <tr>
             <td>{t('user.uploads')}</td>
+=======
+            <td>Username</td>
+            <td>{data.profileUser.name}</td>
+        </tr>
+        <tr>
+            <td>Display Name</td>
+            <td>{data.profileUser.displayName}</td>
+        </tr>
+        <tr>
+            <td>Uploads</td>
+>>>>>>> origin/main
             <td>{data.count}</td>
         </tr>
     </tbody>
@@ -54,11 +75,16 @@
 {#if data.isAdmin}
     {#if !data.profileUser.isTrusted}
         <form use:enhance action="?/trust" method="post">
+<<<<<<< HEAD
             <button type="submit">{t('user.trust')}</button>
+=======
+            <button type="submit">Trust</button>
+>>>>>>> origin/main
         </form>
     {/if}
 
     <details>
+<<<<<<< HEAD
         <summary>{t('user.admin_actions')}</summary>
         {#if !data.profileUser.isBanned}
             <form use:enhance action="?/ban" method="post">
@@ -68,21 +94,45 @@
                 <label for="ban-message">{t('user.message')}</label>
                 <textarea name="message" id="ban-message"></textarea>
                 <button type="submit">{t('user.ban')}</button>
+=======
+        <summary>administrative actions</summary>
+        {#if !data.profileUser.isBanned}
+            <form use:enhance action="?/ban" method="post">
+                <label for="ban-reason">Reason</label>
+                <input type="text" name="reason" id="ban-reason" required />
+                <br />
+                <label for="ban-message">Message</label>
+                <textarea name="message" id="ban-message"></textarea>
+                <button type="submit">Ban</button>
+>>>>>>> origin/main
             </form>
         {/if}
         <br />
         <form use:enhance action="?/warn" method="post">
+<<<<<<< HEAD
             <label for="warn-reason">{t('user.reason')}</label>
             <input type="text" name="reason" id="warn-reason" required />
             <br />
             <label for="warn-message">{t('user.message')}</label>
             <textarea name="message" id="warn-message"></textarea>
             <button type="submit">{t('user.warn')}</button>
+=======
+            <label for="warn-reason">Reason</label>
+            <input type="text" name="reason" id="warn-reason" required />
+            <br />
+            <label for="warn-message">Message</label>
+            <textarea name="message" id="warn-message"></textarea>
+            <button type="submit">Warn</button>
+>>>>>>> origin/main
         </form>
     </details>
 {/if}
 
+<<<<<<< HEAD
 <h2>{t('user.uploads_h2')}</h2>
+=======
+<h2>Uploads</h2>
+>>>>>>> origin/main
 
 <AudioList
     audios={data.audios}
@@ -134,6 +184,7 @@
     button:hover {
         background-color: #444;
     }
+<<<<<<< HEAD
 
     .user-bio {
         background-color: #f9f9f9;
@@ -142,4 +193,6 @@
         padding: 1rem;
         margin-bottom: 1rem;
     }
+=======
+>>>>>>> origin/main
 </style>

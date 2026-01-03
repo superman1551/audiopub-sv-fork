@@ -20,11 +20,16 @@ import fs from "fs/promises";
 import path from "path";
 import { error, fail, redirect } from "@sveltejs/kit";
 import type { Actions, PageServerLoad } from "./$types";
+<<<<<<< HEAD
 import { Audio, Notification } from "$lib/server/database";
 import { NotificationTargetType } from "$lib/types";
 import transcode from "$lib/server/transcode";
 import { availableLocales } from "$lib/i18n";
 import sendEmail from "$lib/server/email";
+=======
+import { Audio } from "$lib/server/database";
+import transcode from "$lib/server/transcode";
+>>>>>>> origin/main
 
 export const load: PageServerLoad = (event) => {
     const user = event.locals.user;
@@ -60,6 +65,7 @@ export const actions: Actions = {
         const file = form.get("file") as File;
         const title = form.get("title") as string;
         const description = form.get("description") as string;
+<<<<<<< HEAD
         const languageRaw = (form.get("language") as string | null)?.trim().toLowerCase();
         
         if (!file) {
@@ -92,12 +98,31 @@ export const actions: Actions = {
             });
         }
         
+=======
+        if (!file) {
+            return fail(400, { title, description });
+        }
+        if (!title) {
+            return fail(400, { title, description });
+        }
+        if (title.length < 3 || title.length > 120) {
+            return fail(400, { title, description });
+        }
+        if (description && description.length > 5000) {
+            return fail(400, { title, description });
+        }
+        if (file.size > 1024 * 1024 * 500) {
+            // 500 MB
+            return fail(400, { title, description });
+        }
+>>>>>>> origin/main
         const audio = await Audio.create({
             title,
             description,
             hasFile: true,
             userId: user.id,
             extension: path.extname(file.name),
+<<<<<<< HEAD
             language: languageRaw,
         });
         // Ensure destination directory exists (e.g., ./audio)
@@ -154,6 +179,15 @@ export const actions: Actions = {
             );
         }
 
+=======
+        });
+        await fs.writeFile(audio.path, Buffer.from(await file.arrayBuffer()));
+        transcode(audio.path).catch(async (err) => {
+            console.error(err);
+            await audio.destroy();
+            await fs.unlink(audio.path);
+        });
+>>>>>>> origin/main
         return redirect(303, `/listen/${audio.id}`);
     },
 };

@@ -21,7 +21,10 @@ import AudioFavorite from "$lib/server/database/models/audio_favorite";
 import type { Actions, PageServerLoad } from "./$types";
 import { type OrderItem, Sequelize } from "sequelize";
 import { fail, error } from "@sveltejs/kit";
+<<<<<<< HEAD
 import { NotificationTargetType } from "$lib/types";
+=======
+>>>>>>> origin/main
 
 export const load: PageServerLoad = async (event) => {
     const pageString = event.url.searchParams.get("page");
@@ -254,6 +257,7 @@ export const actions: Actions = {
                 await Notification.bulkCreate(payloads as any);
             }
 
+<<<<<<< HEAD
             // Mentions in comment -> notify mentioned users
             await Notification.createMentionsFromText(
                 user.id,
@@ -263,6 +267,8 @@ export const actions: Actions = {
                 { metadata: { audioId: audio.id } }
             );
 
+=======
+>>>>>>> origin/main
             return { success: true, comment: commentInDatabase.toClientside() };
         } catch (error) {
             console.error('Error adding comment:', error);

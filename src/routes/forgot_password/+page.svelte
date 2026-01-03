@@ -18,6 +18,7 @@
 -->
 <script lang="ts">
   import title from "$lib/title";
+<<<<<<< HEAD
   import { t, locale } from "$lib/i18n";
   $: { $locale; title.set(t('title.forgot_password')); }
 </script>
@@ -29,16 +30,42 @@
 <form action="/forgot_password" method="post">
   <div class="form-group">
     <label for="email">{t('forgot_password.email')}</label>
+=======
+  import { onMount } from "svelte";
+  onMount(() => title.set("Forgot Password"));
+</script>
+
+<h1>Forgot password</h1>
+
+<p>
+  You forgot your password? No problem! Just enter your email address and we'll
+  send you a link to reset your password.
+</p>
+
+<form action="/forgot_password" method="post">
+  <div class="form-group">
+    <label for="email">Email</label>
+>>>>>>> origin/main
     <input
       type="email"
       id="email"
       name="email"
+<<<<<<< HEAD
       placeholder={t('forgot_password.email')}
       class="form-control"
       required
     />
   </div>
   <button type="submit" class="btn">{t('forgot_password.button')}</button>
+=======
+      placeholder="Email"
+      class="form-control"
+      required
+      autofocus
+    />
+  </div>
+  <button type="submit" class="btn">Send reset link</button>
+>>>>>>> origin/main
 </form>
 
 <style>

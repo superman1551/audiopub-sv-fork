@@ -22,14 +22,23 @@
     import type { ActionData } from "./$types";
     import AudioList from "$lib/components/audio_list.svelte";
     import title from "$lib/title";
+<<<<<<< HEAD
     import { t, locale, availableLocales } from "$lib/i18n";
     $: { $locale; title.set(t('title.profile')); }
+=======
+    import { onMount } from "svelte";
+    onMount(() => title.set("Your profile"));
+>>>>>>> origin/main
 
     export let data: PageData;
     export let form: ActionData;
 </script>
 
+<<<<<<< HEAD
 <h1>{t('profile.h1')}</h1>
+=======
+<h1>Your Profile</h1>
+>>>>>>> origin/main
 
 <form use:enhance method="POST">
     {#if form?.message}
@@ -38,6 +47,7 @@
         </div>
     {/if}
 
+<<<<<<< HEAD
     <fieldset>
         <legend>{t('profile.account_details')}</legend>
         
@@ -109,6 +119,31 @@
 </form>
 
 <h2>{t('profile.uploads')}</h2>
+=======
+    <label for="email">Email:</label>
+    <input type="email" id="email" name="email" value={data.email} />
+    <label for="displayName">Display Name:</label>
+    <input
+        type="text"
+        id="displayName"
+        name="displayName"
+        value={data.displayName}
+        minlength="3"
+        maxlength="30"
+    />
+    <label for="password">New Password:</label>
+    <input
+        type="password"
+        id="password"
+        name="password"
+        minlength="8"
+        maxlength="64"
+    />
+    <button type="submit">Update</button>
+</form>
+
+<h2>Your Uploads</h2>
+>>>>>>> origin/main
 
 <AudioList
     audios={data.audios}
@@ -158,6 +193,7 @@
     button:hover {
         background-color: #444;
     }
+<<<<<<< HEAD
 
     fieldset {
         border: 1px solid #ddd;
@@ -208,4 +244,6 @@
         font-size: 0.9rem;
         font-style: italic;
     }
+=======
+>>>>>>> origin/main
 </style>

@@ -30,5 +30,9 @@ declare global {
 
 declare module "../build/handler.js" {
   import type { RequestHandler } from "express";
+<<<<<<< HEAD
+=======
+
+>>>>>>> origin/main
   export const handler: RequestHandler;
 }

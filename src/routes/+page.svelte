@@ -20,6 +20,7 @@
     import title from "$lib/title";
     import AudioList from "$lib/components/audio_list.svelte";
     import type { PageData } from "./$types";
+<<<<<<< HEAD
     import { t, locale } from "$lib/i18n";
 
     export let data: PageData;
@@ -77,10 +78,68 @@
         >
         <option value="random" selected={data.sortField === "random"}
             >{t('home.sort.random')}</option
+=======
+    import { onMount } from "svelte";
+
+    export let data: PageData;
+    title.set("Home");
+
+    $: sortDescription = (() => {
+        let fieldDesc = "";
+        switch (data.sortField) {
+            case "createdAt":
+                fieldDesc = "date";
+                break;
+            case "plays":
+                fieldDesc = "play count";
+                break;
+            case "favoriteCount":
+                fieldDesc = "favorite count";
+                break;
+            case "title":
+                fieldDesc = "title";
+                break;
+            case "random":
+                fieldDesc = "random";
+                break;
+            default:
+                fieldDesc = "date";
+        }
+        const orderDesc =
+            data.sortField === "random"
+                ? ""
+                : data.sortOrder === "DESC"
+                  ? "descending"
+                  : "ascending";
+        return `${fieldDesc} ${orderDesc}`.trim();
+    })();
+</script>
+
+<h1>Welcome to Audiopub</h1>
+
+<form method="GET" action="/">
+    <label for="sort">Sort by:</label>
+    <select name="sort" id="sort">
+        <option value="createdAt" selected={data.sortField === "createdAt"}
+            >Date</option
+        >
+        <option value="plays" selected={data.sortField === "plays"}
+            >Play Count</option
+        >
+        <option value="favoriteCount" selected={data.sortField === "favoriteCount"}
+            >Favorite Count</option
+        >
+        <option value="title" selected={data.sortField === "title"}
+            >Title</option
+        >
+        <option value="random" selected={data.sortField === "random"}
+            >Random</option
+>>>>>>> origin/main
         >
     </select>
     <br />
     {#if data.sortField !== "random"}
+<<<<<<< HEAD
         <label for="order">{t('home.order')}</label>
         <select name="order" id="order">
             <option value="DESC" selected={data.sortOrder === "DESC"}
@@ -88,18 +147,38 @@
             >
             <option value="ASC" selected={data.sortOrder === "ASC"}
                 >{t('home.order.asc')}</option
+=======
+        <label for="order">Order:</label>
+        <select name="order" id="order">
+            <option value="DESC" selected={data.sortOrder === "DESC"}
+                >Descending</option
+            >
+            <option value="ASC" selected={data.sortOrder === "ASC"}
+                >Ascending</option
+>>>>>>> origin/main
             >
         </select>
         <br />
     {/if}
+<<<<<<< HEAD
     <button type="submit">{t('home.sort.button')}</button>
 </form>
 
 <h2>{t('home.list.prefix')} {sortDescription}</h2>
+=======
+    <button type="submit">Sort</button>
+</form>
+
+<h2>Audio list sorted by {sortDescription}</h2>
+>>>>>>> origin/main
 
 <AudioList
     audios={data.audios}
     page={data.page}
     totalPages={data.totalPages}
+<<<<<<< HEAD
+=======
+    currentUser={data.user}
+>>>>>>> origin/main
     paginationBaseUrl={`/?sort=${data.sortField}${data.sortField === "random" ? "" : "&order=" + data.sortOrder}`}
 />

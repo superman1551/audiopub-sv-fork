@@ -20,6 +20,7 @@
     import { enhance } from "$app/forms";
     import title from "$lib/title";
     import type { ActionData } from "./$types";
+<<<<<<< HEAD
     import { t, locale } from "$lib/i18n";
 
     export let form: ActionData;
@@ -27,6 +28,16 @@
 </script>
 
 <h1>{t('register.h1')}</h1>
+=======
+    import { onMount } from "svelte";
+
+    export let form: ActionData;
+
+    onMount(() => title.set("Register"));
+</script>
+
+<h1>Register</h1>
+>>>>>>> origin/main
 
 <form use:enhance method="POST">
     {#if form?.message}
@@ -36,19 +47,31 @@
     {/if}
 
     <div class="form-group">
+<<<<<<< HEAD
         <label for="username">{t('register.username')}:</label>
+=======
+        <label for="username">Username:</label>
+>>>>>>> origin/main
         <input
             type="text"
             id="username"
             name="username"
             required
+<<<<<<< HEAD
+=======
+            autofocus
+>>>>>>> origin/main
             minlength="3"
             maxlength="24"
             class="form-control"
         />
     </div>
     <div class="form-group">
+<<<<<<< HEAD
         <label for="email">{t('register.email')}:</label>
+=======
+        <label for="email">Email:</label>
+>>>>>>> origin/main
         <input
             type="email"
             id="email"
@@ -58,7 +81,11 @@
         />
     </div>
     <div class="form-group">
+<<<<<<< HEAD
         <label for="password">{t('register.password')}:</label>
+=======
+        <label for="password">Password:</label>
+>>>>>>> origin/main
         <input
             type="password"
             id="password"
@@ -69,7 +96,11 @@
             class="form-control"
         />
     </div>
+<<<<<<< HEAD
     <button type="submit" class="btn">{t('register.button')}</button>
+=======
+    <button type="submit" class="btn">Register</button>
+>>>>>>> origin/main
 </form>
 
 <style>

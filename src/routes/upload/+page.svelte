@@ -19,6 +19,7 @@
 <script lang="ts">
     import { enhance } from "$app/forms";
     import title from "$lib/title";
+<<<<<<< HEAD
     import { t, locale, availableLocales } from "$lib/i18n";
     import type { ActionData } from "./$types";
     $: { $locale; title.set(t('title.upload')); }
@@ -27,6 +28,14 @@
 </script>
 
 <h1>{t('upload.h1')}</h1>
+=======
+    import { onMount } from "svelte";
+    onMount(() => title.set("Upload Audio"));
+    let submitting = false;
+</script>
+
+<h1>Upload Audio</h1>
+>>>>>>> origin/main
 
 <form
     use:enhance={() => {
@@ -39,6 +48,7 @@
     method="POST"
     enctype="multipart/form-data"
 >
+<<<<<<< HEAD
     {#if form?.errorKey || form?.message}
         <div class="error-message" role="alert" aria-live="assertive">
             {#if form?.errorKey}{t(form.errorKey)}{:else}{form?.message}{/if}
@@ -46,11 +56,16 @@
     {/if}
     <div class="form-group">
         <label for="title">{t('upload.title')}</label>
+=======
+    <div class="form-group">
+        <label for="title">Title:</label>
+>>>>>>> origin/main
         <input
             type="text"
             id="title"
             name="title"
             required
+<<<<<<< HEAD
             minlength="3"
             maxlength="120"
             class="form-control"
@@ -59,11 +74,22 @@
     </div>
     <div class="form-group">
         <label for="description">{t('upload.description')}</label>
+=======
+            autofocus
+            minlength="3"
+            maxlength="120"
+            class="form-control"
+        />
+    </div>
+    <div class="form-group">
+        <label for="description">Description:</label>
+>>>>>>> origin/main
         <textarea
             id="description"
             name="description"
             maxlength="5000"
             class="form-control"
+<<<<<<< HEAD
         >{form?.description || ''}</textarea>
     </div>
     <div class="form-group">
@@ -78,6 +104,12 @@
     </div>
     <div class="form-group">
         <label for="audio">{t('upload.file')}</label>
+=======
+        ></textarea>
+    </div>
+    <div class="form-group">
+        <label for="audio">Audio File:</label>
+>>>>>>> origin/main
         <input
             type="file"
             id="audio"
@@ -87,6 +119,7 @@
         />
     </div>
     <p class="info">
+<<<<<<< HEAD
         {t('upload.info.formats')}
     </p>
     <p class="info">
@@ -94,10 +127,24 @@
     </p>
     <button type="submit" class="btn" disabled={submitting}
         >{#if submitting}{t('upload.submitting')}{:else}{t('upload.submit')}{/if}</button
+=======
+        Most known audio formats should be supported. Your audio may be
+        transcoded for browsers that do not support the original format. For
+        when you hit the size limit, you can use opus at a decent bitrate as it
+        is the most efficient codec for streaming.
+    </p>
+    <p class="info">
+        Please follow common decency and the law. Moderators and admins reserve
+        the right to remove any content that is deemed inappropriate or illegal.
+    </p>
+    <button type="submit" class="btn" disabled={submitting}
+        >{#if submitting}Uploading...{:else}Upload{/if}</button
+>>>>>>> origin/main
     >
 </form>
 
 <style>
+<<<<<<< HEAD
     .error-message {
         color: #721c24;
         background-color: #f8d7da;
@@ -109,6 +156,8 @@
         max-width: 600px;
     }
     
+=======
+>>>>>>> origin/main
     h1 {
         text-align: center;
         margin-bottom: 1rem;

@@ -21,10 +21,16 @@
     import QuickfeedPlayer from "$lib/components/quickfeed_player.svelte";
     import { beforeNavigate, afterNavigate } from "$app/navigation";
     import type { PageData } from "./$types";
+<<<<<<< HEAD
     import { t, locale } from "$lib/i18n";
 
     export let data: PageData;
     $: { $locale; title.set(t('title.quickfeed')); }
+=======
+
+    export let data: PageData;
+    title.set("Quickfeed");
+>>>>>>> origin/main
 
     let quickfeedPlayerRef: QuickfeedPlayer;
 
@@ -63,6 +69,9 @@
         height: calc(100vh - 80px);
         overflow: hidden;
     }
+<<<<<<< HEAD
 
     
+=======
+>>>>>>> origin/main
 </style>

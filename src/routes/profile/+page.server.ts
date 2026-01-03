@@ -20,7 +20,10 @@ import { fail, redirect, type Actions } from "@sveltejs/kit";
 import type { PageServerLoad } from "./$types";
 import { User, Audio } from "$lib/server/database";
 import { hash } from "bcrypt";
+<<<<<<< HEAD
 import { availableLocales } from "$lib/i18n";
+=======
+>>>>>>> origin/main
 
 export const load: PageServerLoad = async (event) => {
   const user = event.locals.user;
@@ -63,6 +66,7 @@ export const actions: Actions = {
     let email = data.get("email") as string;
     let displayName = data.get("displayName") as string;
     let password = data.get("password") as string;
+<<<<<<< HEAD
     let bio = data.get("bio") as string | null;
     const preferredLanguagesRaw = data.getAll("preferredLanguages") as string[];
     
@@ -71,6 +75,8 @@ export const actions: Actions = {
     const validLanguageCodes = new Set([...LOCALE_CODES, "und"]);
     const preferredLanguages = preferredLanguagesRaw.filter((code) => validLanguageCodes.has(code));
     
+=======
+>>>>>>> origin/main
     if (email) {
       email = email.trim().toLowerCase();
       if (
@@ -107,6 +113,7 @@ export const actions: Actions = {
       user.password = await hash(password, 12);
       user.version++;
     }
+<<<<<<< HEAD
     
     // Update bio (trim and validate length)
     if (bio !== null) {
@@ -124,6 +131,8 @@ export const actions: Actions = {
     // Update preferredLanguages
     (user as any).preferredLanguages = preferredLanguages.length > 0 ? JSON.stringify(preferredLanguages) : null;
     
+=======
+>>>>>>> origin/main
     await user.save();
     event.cookies.set("token", await user.generateToken(), { path: "/" });
     return redirect(303, "/");

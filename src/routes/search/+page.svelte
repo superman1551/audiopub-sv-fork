@@ -20,12 +20,21 @@
   export let data;
   import AudioList from "$lib/components/audio_list.svelte";
   import title from "$lib/title";
+<<<<<<< HEAD
   import { t, locale } from "$lib/i18n";
   $: { $locale; title.set(t('title.search_results', { query: data.query })); }
 </script>
 <h1>{t('search.results')} {data.query}</h1>
 
 <AudioList audios={data.audios} page={data.page} totalPages={0} paginationBaseUrl={`/search`} />
+=======
+  import { onMount } from "svelte";
+  onMount(() => title.set(`Search results for: ${data.query}`));
+</script>
+<h1>Search results for: {data.query}</h1>
+
+<AudioList audios={data.audios} currentUser={data.user} page={data.page} totalPages={0} paginationBaseUrl={`/search`} />
+>>>>>>> origin/main
 
 <style>
   h1 {

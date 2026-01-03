@@ -20,6 +20,7 @@
     import title from "$lib/title";
     import AudioList from "$lib/components/audio_list.svelte";
     import type { PageData } from "./$types";
+<<<<<<< HEAD
     import { t, locale } from "$lib/i18n";
 
     export let data: PageData;
@@ -37,6 +38,25 @@
     
     <AudioList
         audios={data.audios}
+=======
+
+    export let data: PageData;
+    title.set("My Favorites");
+</script>
+
+<h1>My Favorites</h1>
+
+{#if data.audios.length === 0}
+    <div class="empty-state">
+        <p>You haven't favorited any audio yet.</p>
+    </div>
+{:else}
+    <p>You have {data.count} favorite{data.count === 1 ? '' : 's'}.</p>
+    
+    <AudioList
+        audios={data.audios}
+        currentUser={data.user}
+>>>>>>> origin/main
         page={data.page}
         totalPages={data.totalPages}
         groupThreshold={0}
@@ -57,5 +77,17 @@
         line-height: 1.5;
     }
 
+<<<<<<< HEAD
     /* No links in empty state; removed anchor styles */
+=======
+    .empty-state a {
+        color: var(--text-link-color, #0066cc);
+        text-decoration: none;
+        font-weight: 500;
+    }
+
+    .empty-state a:hover {
+        text-decoration: underline;
+    }
+>>>>>>> origin/main
 </style>
