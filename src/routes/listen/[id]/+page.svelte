@@ -188,6 +188,16 @@
         margin-bottom: 0.5rem;
     }
 
+    /* Styling for the download link */
+    .audio-player a {
+        display: block;
+        text-align: center;
+        margin-top: 0.5rem;
+        color: #007bff;
+        text-decoration: none;
+        font-weight: bold;
+    }
+
     /* Styling for the audio details section */
     .audio-details {
         border: 1px solid #ccc;
