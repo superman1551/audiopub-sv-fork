@@ -48,9 +48,19 @@
      * expression itself, so a value read only inside the function body would
      * leave the label stale after the tally changes.
      */
-    function chipLabel(emoji: string, count: number, reacted: boolean): string {
+    function chipLabel(
+        emoji: string,
+        count: number,
+        reacted: boolean,
+        interactive: boolean = true,
+    ): string {
         const name = reactionLabel(emoji);
         const tally = count === 1 ? "1 reaction" : `${count} reactions`;
+        // A read only viewer has nothing to activate, so the label stops at
+        // the tally instead of offering an action they cannot take.
+        if (!interactive) {
+            return `${name}, ${tally}`;
+        }
         return reacted
             ? `${name}, ${tally}, including yours. Activate to remove your reaction`
             : `${name}, ${tally}. Activate to react`;
@@ -149,7 +159,7 @@
         </div>
     {/if}
 {:else if used.length > 0}
-    <p class="reaction-bar" aria-label={label}>
+    <p class="reaction-bar" role="group" aria-label={label}>
         {#each used as reaction (reaction.emoji)}
             <span
                 class="reaction static"
@@ -157,6 +167,7 @@
                     reaction.emoji,
                     reaction.count,
                     reaction.reacted,
+                    false,
                 )}
                 ><span aria-hidden="true">{reaction.emoji}</span>
                 <span aria-hidden="true" class="count">{reaction.count}</span
