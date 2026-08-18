@@ -27,6 +27,8 @@ import {
     STREAM_ARCHIVED,
     STREAM_MODERATION_CHANGED,
     STREAM_CHAT_REACTION,
+    STREAM_POLL_CHANGED,
+    STREAM_POLL_DELETED,
 } from "$lib/server/streaming";
 import type {
     StreamStateChangedEvent,
@@ -36,6 +38,8 @@ import type {
     StreamArchivedEvent,
     StreamModerationChangedEvent,
     StreamChatReactionEvent,
+    StreamPollChangedEvent,
+    StreamPollDeletedEvent,
 } from "$lib/server/streaming";
 
 export const GET: RequestHandler = async (event) => {
@@ -97,6 +101,18 @@ export const GET: RequestHandler = async (event) => {
         }
     };
 
+    const onPollChanged = (data: StreamPollChangedEvent) => {
+        if (data.streamId === stream.id) {
+            send("poll", { kind: data.kind, poll: data.poll });
+        }
+    };
+
+    const onPollDeleted = (data: StreamPollDeletedEvent) => {
+        if (data.streamId === stream.id) {
+            send("poll_delete", { pollId: data.pollId });
+        }
+    };
+
     const onModerationChanged = (data: StreamModerationChangedEvent) => {
         if (data.streamId === stream.id) {
             send("moderation", {
@@ -142,6 +158,8 @@ export const GET: RequestHandler = async (event) => {
             streamingService.on(STREAM_ARCHIVED, onArchived);
             streamingService.on(STREAM_MODERATION_CHANGED, onModerationChanged);
             streamingService.on(STREAM_CHAT_REACTION, onChatReaction);
+            streamingService.on(STREAM_POLL_CHANGED, onPollChanged);
+            streamingService.on(STREAM_POLL_DELETED, onPollDeleted);
 
             keepalive = setInterval(() => {
                 try {
@@ -161,6 +179,8 @@ export const GET: RequestHandler = async (event) => {
             streamingService.off(STREAM_ARCHIVED, onArchived);
             streamingService.off(STREAM_MODERATION_CHANGED, onModerationChanged);
             streamingService.off(STREAM_CHAT_REACTION, onChatReaction);
+            streamingService.off(STREAM_POLL_CHANGED, onPollChanged);
+            streamingService.off(STREAM_POLL_DELETED, onPollDeleted);
             streamingService.listenerDisconnected(stream.id);
         },
     });

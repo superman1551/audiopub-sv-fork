@@ -39,6 +39,41 @@ export interface ClientsideReaction {
     reacted: boolean;
 }
 
+export enum PollState {
+    open = "open",
+    closed = "closed",
+}
+
+export interface ClientsidePollOption {
+    id: string;
+    text: string;
+    votes: number;
+}
+
+export interface ClientsidePoll {
+    id: string;
+    streamId: string;
+    question: string;
+    state: PollState;
+    createdAt: number;
+    closedAt: number | null;
+    /** When true, voters may pick several options instead of just one. */
+    allowMultiple: boolean;
+    /** When true, the tally stays hidden until the viewer has voted. */
+    hideResultsUntilVote: boolean;
+    /**
+     * True when the counts in this payload were withheld from the viewer.
+     * Vote numbers are zeroed in that case rather than merely hidden by the
+     * UI, so the answer cannot be read off the network response.
+     */
+    resultsHidden: boolean;
+    /** Distinct voters, which is what the percentages are relative to. */
+    totalVotes: number;
+    /** The viewer's own votes; never included in broadcast payloads. */
+    votedOptionIds: string[];
+    options: ClientsidePollOption[];
+}
+
 export interface ClientsideStream {
     id: string;
     title: string;

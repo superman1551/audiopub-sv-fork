@@ -47,6 +47,7 @@ import {
     summarizeReactions,
     toggleReaction,
 } from "$lib/server/reactions";
+import { getPollsForStream } from "$lib/server/polls";
 import { ReactionTargetType } from "$lib/types";
 
 export const load: PageServerLoad = async (event) => {
@@ -220,6 +221,10 @@ export const load: PageServerLoad = async (event) => {
                   );
               })
             : null,
+        // Polls from the broadcast stay readable once it is archived.
+        archivedPolls: audio.archivedStreamId
+            ? await getPollsForStream(audio.archivedStreamId, viewer?.id)
+            : [],
         isSubscribed,
         canEdit,
         hasEdits: Boolean(viewer?.isAdmin && edits.length > 0),
@@ -365,7 +370,7 @@ export const actions: Actions = {
             return error(404, "Not found");
         }
         const form = await event.request.formData();
-        // The button posts the state it wants, so the action stays idempotent
+        // The toggle posts the state it wants, so the action stays idempotent
         // and a double submit cannot flip it back.
         audio.isAnnouncement = form.get("isAnnouncement") === "on";
         await audio.save();

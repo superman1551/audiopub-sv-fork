@@ -21,6 +21,7 @@
 
     import { onMount, tick } from "svelte";
     import StreamChatList from "$lib/components/stream_chat_list.svelte";
+    import StreamPolls from "$lib/components/stream_polls.svelte";
     import AudioPlayer from "$lib/components/audio_player.svelte";
     import ChatReader from "$lib/components/chat_reader.svelte";
     import SafeMarkdown from "$lib/components/safe_markdown.svelte";
@@ -31,6 +32,7 @@
     import type {
         ClientsideStreamChat,
         ClientsideStreamMute,
+        ClientsidePoll,
         ClientsideReaction,
     } from "$lib/types";
 
@@ -57,6 +59,7 @@
     let latestChat: ClientsideStreamChat | null = null;
     let eventSource: EventSource | null = null;
 
+    let polls = (data.polls ?? []) as ClientsidePoll[];
     let mutes = (data.mutes ?? []) as ClientsideStreamMute[];
     let slowModeSeconds = data.slowModeSeconds ?? 0;
     let slowModeValue = String(slowModeSeconds);
@@ -74,6 +77,44 @@
             chatNotice = "";
             noticeTimer = null;
         }, durationMs);
+    }
+
+    /**
+     * Broadcast polls carry no `votedOptionIds` (they are per viewer), so keep
+     * the ones we already know unless the update came from our own request.
+     */
+    function mergePoll(incoming: ClientsidePoll, fromBroadcast: boolean) {
+        const existing = polls.find((p) => p.id === incoming.id);
+        const merged = fromBroadcast
+            ? {
+                  ...incoming,
+                  votedOptionIds:
+                      existing?.votedOptionIds ?? incoming.votedOptionIds,
+              }
+            : incoming;
+        polls = existing
+            ? polls.map((p) => (p.id === merged.id ? merged : p))
+            : [merged, ...polls];
+    }
+
+    /**
+     * A hidden-results poll is broadcast with its tally stripped, so a viewer
+     * who is entitled to see it (they voted, or they host the stream) has to
+     * ask for their own view of it.
+     */
+    async function refreshPolls() {
+        try {
+            const res = await fetch(`/live/${data.stream.id}/polls`);
+            if (!res.ok) return;
+            const body = await res.json();
+            polls = body.polls as ClientsidePoll[];
+        } catch {
+            // The next broadcast will try again.
+        }
+    }
+
+    function removePoll(pollId: string) {
+        polls = polls.filter((p) => p.id !== pollId);
     }
 
     async function handleChatReaction(
@@ -152,6 +193,24 @@
                 d.chatId,
                 reactions.map((r) => ({ ...r, reacted: r.emoji === mine })),
             );
+        });
+
+        eventSource.addEventListener("poll", (e) => {
+            const d = JSON.parse(e.data);
+            const incoming = d.poll as ClientsidePoll;
+            const existing = polls.find((p) => p.id === incoming.id);
+            mergePoll(incoming, true);
+            if (
+                incoming.resultsHidden &&
+                (isOwnerOrAdmin || (existing?.votedOptionIds.length ?? 0) > 0)
+            ) {
+                refreshPolls();
+            }
+        });
+
+        eventSource.addEventListener("poll_delete", (e) => {
+            const { pollId } = JSON.parse(e.data);
+            removePoll(pollId);
         });
 
         eventSource.addEventListener("chat_delete", (e) => {
@@ -453,6 +512,15 @@
         <SafeMarkdown source={data.stream.description} />
     {/if}
 </div>
+
+<StreamPolls
+    streamId={data.stream.id}
+    {polls}
+    canManage={Boolean(isOwnerOrAdmin)}
+    canVote={Boolean(data.user && data.user.isVerified && !data.user.isBanned)}
+    onLocalUpdate={(poll) => mergePoll(poll, false)}
+    onLocalDelete={removePoll}
+/>
 
 <StreamChatList
     streamId={data.stream.id}

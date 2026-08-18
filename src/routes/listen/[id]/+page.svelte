@@ -23,6 +23,7 @@
     import { onMount } from "svelte";
     import CommentList from "$lib/components/comment_list.svelte";
     import StreamChatList from "$lib/components/stream_chat_list.svelte";
+    import StreamPolls from "$lib/components/stream_polls.svelte";
     import title from "$lib/title";
     import SafeMarkdown from "$lib/components/safe_markdown.svelte";
     import type {
@@ -478,6 +479,15 @@
                 }}
             />
         </details>
+    {/if}
+
+    {#if data.archivedStreamId && data.archivedPolls && data.archivedPolls.length > 0}
+        <StreamPolls
+            streamId={data.archivedStreamId}
+            polls={data.archivedPolls}
+            readOnly
+            heading="Poll results from this stream"
+        />
     {/if}
 
     <section role="group" aria-label="Comments">

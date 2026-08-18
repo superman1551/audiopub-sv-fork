@@ -27,6 +27,7 @@ import os from "node:os";
 import type {
     ClientsideStreamChat,
     ClientsideStreamMute,
+    ClientsidePoll,
     ClientsideReaction,
 } from "$lib/types";
 import { StreamState, StreamFormat } from "$lib/types";
@@ -82,6 +83,25 @@ export class StreamingService extends EventEmitter {
             actorId,
             emoji,
         } as StreamChatReactionEvent);
+    }
+
+    notifyPollChanged(
+        streamId: string,
+        kind: "created" | "updated" | "closed",
+        poll: ClientsidePoll,
+    ) {
+        this.emit(STREAM_POLL_CHANGED, {
+            streamId,
+            kind,
+            poll,
+        } as StreamPollChangedEvent);
+    }
+
+    notifyPollDeleted(streamId: string, pollId: string) {
+        this.emit(STREAM_POLL_DELETED, {
+            streamId,
+            pollId,
+        } as StreamPollDeletedEvent);
     }
 
     notifyStateChanged(
@@ -600,6 +620,8 @@ export const STREAM_DESTROYED = "stream:destroyed";
 export const STREAM_LISTENERS_CHANGED = "stream:listeners_changed";
 export const STREAM_MODERATION_CHANGED = "stream:moderation_changed";
 export const STREAM_CHAT_REACTION = "stream:chat_reaction";
+export const STREAM_POLL_CHANGED = "stream:poll_changed";
+export const STREAM_POLL_DELETED = "stream:poll_deleted";
 
 export interface StreamEvent {
     streamId: string;
@@ -625,6 +647,15 @@ export interface StreamChatReactionEvent extends StreamEvent {
     actorId: string;
     /** The actor's reaction after the change, or null when they removed it. */
     emoji: string | null;
+}
+
+export interface StreamPollChangedEvent extends StreamEvent {
+    kind: "created" | "updated" | "closed";
+    poll: ClientsidePoll;
+}
+
+export interface StreamPollDeletedEvent extends StreamEvent {
+    pollId: string;
 }
 
 export interface StreamListenersChangedEvent extends StreamEvent {
